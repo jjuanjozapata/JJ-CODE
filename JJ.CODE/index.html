@@ -133,7 +133,7 @@
     }
     .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
 
-    /* Barra de pestañas múltiples */
+    /* Pestañas */
     .tab-bar {
       flex-shrink: 0;
       background-color: #111B21;
@@ -227,9 +227,57 @@
     .cm-s-prettier span.cm-operator { color: #FF5198; }
     .cm-s-prettier span.cm-builtin { color: #3CA9E2; }
 
+    /* Barra de Símbolos Rápidos Móvil */
+    .symbols-bar {
+      flex-shrink: 0;
+      background-color: #16242D;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-top: 1px solid #1A2B34;
+      border-bottom: 1px solid #111B21;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      user-select: none;
+    }
+    .symbols-bar::-webkit-scrollbar { display: none; }
+
+    .sym-btn {
+      background-color: #1A2B34;
+      border: 1px solid #233642;
+      color: #3CA9E2;
+      border-radius: 6px;
+      font-family: 'SF Mono', Menlo, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 32px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .sym-btn:active {
+      background-color: #FF5198;
+      color: white;
+      border-color: #FF5198;
+      transform: scale(0.95);
+    }
+    .sym-btn.action {
+      color: #28C0A9;
+      font-size: 12px;
+    }
+    .sym-btn.kw {
+      color: #FF5198;
+      font-size: 12px;
+    }
+
     .console-section {
       flex-shrink: 0;
-      height: 48%;
+      height: 44%;
       background-color: #0B1216;
       border-top: 1px solid #233642;
       display: flex;
@@ -351,7 +399,6 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Elementos del árbol con soporte Long-Press */
     .tree-folder, .tree-file {
       user-select: none;
       -webkit-user-select: none;
@@ -638,6 +685,33 @@
       <textarea id="codigo"></textarea>
     </div>
 
+    <!-- Barra de símbolos rápidos para teclado móvil -->
+    <div class="symbols-bar" id="barraSimbolos">
+      <button class="sym-btn action" data-sym="UNDO" title="Deshacer">↶</button>
+      <button class="sym-btn action" data-sym="REDO" title="Rehacer">↷</button>
+      <button class="sym-btn action" data-sym="TAB" title="Tabular">Tab</button>
+      <button class="sym-btn" data-sym=":">:</button>
+      <button class="sym-btn" data-sym="=">=</button>
+      <button class="sym-btn" data-sym="()">()</button>
+      <button class="sym-btn" data-sym="[]">[]</button>
+      <button class="sym-btn" data-sym="{}">{}</button>
+      <button class="sym-btn" data-sym='""'>""</button>
+      <button class="sym-btn" data-sym="''">''</button>
+      <button class="sym-btn" data-sym="_">_</button>
+      <button class="sym-btn" data-sym="#">#</button>
+      <button class="sym-btn" data-sym="+">+</button>
+      <button class="sym-btn" data-sym="-">-</button>
+      <button class="sym-btn" data-sym="*">*</button>
+      <button class="sym-btn" data-sym="/">/</button>
+      <button class="sym-btn" data-sym=">">&gt;</button>
+      <button class="sym-btn" data-sym="<">&lt;</button>
+      <button class="sym-btn" data-sym="==">==</button>
+      <button class="sym-btn" data-sym="!=">!=</button>
+      <button class="sym-btn kw" data-sym="def ">def</button>
+      <button class="sym-btn kw" data-sym="return ">return</button>
+      <button class="sym-btn kw" data-sym="print()">print</button>
+    </div>
+
     <!-- Terminal -->
     <section class="console-section" id="seccionConsola">
       <div class="console-header">
@@ -665,12 +739,12 @@
 
     // Persistencia Local
     let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
-      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, bienvenido.')",
-      "ayuda.py": "# Archivo secundario para practicar con pestañas\ndef sumar(a, b):\n    return a + b\n\nprint('Total:', sumar(10, 5))"
+      "prueba.py": "# Importando módulo local\nimport modulos.operaciones as op\n\nnombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}!')\nprint('5 + 3 =', op.sumar(5, 3))",
+      "modulos/operaciones.py": "# Módulo de operaciones matemáticas\ndef sumar(a, b):\n    return a + b\n\ndef restar(a, b):\n    return a - b"
     };
     let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
     let carpetasEstado = JSON.parse(localStorage.getItem('py_carpetas_estado')) || {};
-    let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "ayuda.py"];
+    let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "modulos/operaciones.py"];
     let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
 
     // Validaciones iniciales
@@ -709,6 +783,60 @@
     editor.on("cursorActivity", () => {
       const pos = editor.getCursor();
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
+    });
+
+    // --- BARRA DE SÍMBOLOS RÁPIDOS MÓVIL ---
+    function insertarSimbolo(sym) {
+      editor.focus();
+      const doc = editor.getDoc();
+      const cursor = doc.getCursor();
+
+      switch(sym) {
+        case 'TAB':
+          doc.replaceSelection("    ");
+          break;
+        case 'UNDO':
+          editor.undo();
+          break;
+        case 'REDO':
+          editor.redo();
+          break;
+        case '()':
+          doc.replaceRange("()", cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          break;
+        case '[]':
+          doc.replaceRange("[]", cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          break;
+        case '{}':
+          doc.replaceRange("{}", cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          break;
+        case '""':
+          doc.replaceRange('""', cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          break;
+        case "''":
+          doc.replaceRange("''", cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          break;
+        case 'print()':
+          doc.replaceRange('print()', cursor);
+          doc.setCursor({ line: cursor.line, ch: cursor.ch + 6 });
+          break;
+        default:
+          doc.replaceSelection(sym);
+          break;
+      }
+    }
+
+    document.querySelectorAll('.sym-btn').forEach(btn => {
+      const sym = btn.getAttribute('data-sym');
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        insertarSimbolo(sym);
+      });
     });
 
     // --- PESTAÑAS MÚLTIPLES ---
@@ -874,7 +1002,7 @@
       }
     }
 
-    // --- HELPER: DETECTOR DE LONG PRESS (500ms) ---
+    // --- DETECTOR DE LONG PRESS (500ms) ---
     function configurarLongPress(elemento, callbackClick, callbackLongPress) {
       let pressTimer = null;
       let ejecutoLongPress = false;
@@ -922,23 +1050,20 @@
         }
       };
 
-      // Eventos táctiles
       elemento.addEventListener('touchstart', inicio, { passive: true });
       elemento.addEventListener('touchmove', movimiento, { passive: true });
       elemento.addEventListener('touchend', fin);
       elemento.addEventListener('touchcancel', cancelar);
 
-      // Eventos de ratón
       elemento.addEventListener('mousedown', (e) => { if (e.button === 0) inicio(e); });
       elemento.addEventListener('mousemove', movimiento);
       elemento.addEventListener('mouseup', fin);
       elemento.addEventListener('mouseleave', cancelar);
 
-      // Desactivar menú contextual nativo de Safari
       elemento.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
-    // --- MENÚ CONTEXTUAL / ACCIONES ---
+    // --- MENÚ CONTEXTUAL (LONG PRESS) ---
     let elementoContextual = { tipo: '', ruta: '' };
 
     function abrirMenuContextual(tipo, ruta) {
@@ -1042,7 +1167,7 @@
       }
     }
 
-    // --- EXPLORADOR DE ARCHIVOS (ÁRBOL ANIDADO Y COLAPSABLE) ---
+    // --- EXPLORADOR DE ARCHIVOS ---
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('overlay');
@@ -1055,9 +1180,9 @@
       const contenedor = document.getElementById('listaArchivos');
       contenedor.innerHTML = '';
 
-      // 1. Renderizar Carpetas y sus subarchivos
+      // 1. Carpetas y sus subarchivos
       carpetasCreadas.forEach(carpeta => {
-        const estaAbierta = carpetasEstado[carpeta] !== false; // por defecto abierta
+        const estaAbierta = carpetasEstado[carpeta] !== false;
 
         const folderWrap = document.createElement('div');
         folderWrap.style.marginBottom = '6px';
@@ -1075,13 +1200,11 @@
         configurarLongPress(
           folderHead,
           () => {
-            // Click normal: Colapsar / Expandir
             carpetasEstado[carpeta] = !estaAbierta;
             localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
             renderizarArchivos();
           },
           () => {
-            // Long Press: Opciones contextuales
             abrirMenuContextual('carpeta', carpeta);
           }
         );
@@ -1126,7 +1249,7 @@
         contenedor.appendChild(folderWrap);
       });
 
-      // 2. Renderizar Archivos en Raíz (sin carpeta)
+      // 2. Archivos en Raíz
       const archivosRaiz = Object.keys(sistemaArchivos).filter(k => !k.includes('/'));
       if (archivosRaiz.length > 0) {
         const rootHeader = document.createElement('div');
@@ -1299,6 +1422,7 @@
       setTimeout(() => editor.refresh(), 260);
     }
 
+    // --- EJECUTOR PYTHON CON RESOLUCIÓN DE MÓDULOS LOCALES (IMPORT) ---
     function ejecutarCodigo() {
       const seccion = document.getElementById('seccionConsola');
       if (seccion.classList.contains('oculta')) {
@@ -1316,8 +1440,31 @@
           salidaConsola.scrollTop = salidaConsola.scrollHeight;
         },
         read: (x) => {
-          if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) throw "Archivo no encontrado: '" + x + "'";
-          return Sk.builtinFiles["files"][x];
+          // 1. Librería estándar de Skulpt
+          if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"] !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
+            return Sk.builtinFiles["files"][x];
+          }
+
+          // 2. Limpieza de rutas de Skulpt (ej: 'src/lib/modulo.js' o './modulo.py')
+          let clean = x.replace(/^src\/lib\//, '').replace(/^\.\//, '');
+
+          // Búsqueda directa en localStorage
+          if (sistemaArchivos[clean] !== undefined) return sistemaArchivos[clean];
+          if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
+
+          // Soporte para notación de puntos: "import modulos.operaciones" -> "modulos/operaciones.py"
+          let rutaConBarras = clean.replace(/\.js$/, '').replace(/\./g, '/') + '.py';
+          if (sistemaArchivos[rutaConBarras] !== undefined) return sistemaArchivos[rutaConBarras];
+
+          // Búsqueda relativa al directorio del archivo actualmente activo
+          if (archivoActual && archivoActual.includes('/')) {
+            const directorioActual = archivoActual.substring(0, archivoActual.lastIndexOf('/'));
+            const rutaRelativa = `${directorioActual}/${clean}`;
+            if (sistemaArchivos[rutaRelativa] !== undefined) return sistemaArchivos[rutaRelativa];
+            if (sistemaArchivos[rutaRelativa + '.py'] !== undefined) return sistemaArchivos[rutaRelativa + '.py'];
+          }
+
+          throw "Módulo o archivo no encontrado: '" + x + "'";
         },
         inputfunTakesPrompt: true,
         inputfun: (promptText) => {

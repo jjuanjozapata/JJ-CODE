@@ -62,7 +62,7 @@
       display: flex;
       align-items: center;
       padding: 10px 14px;
-      gap: 10px;
+      gap: 8px;
       border-bottom: 1px solid #1A2B34;
     }
 
@@ -70,7 +70,7 @@
       background: none;
       border: none;
       color: #5C7482;
-      font-size: 20px;
+      font-size: 19px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -115,6 +115,46 @@
       border-radius: 4px;
       background: #111B21;
       display: none;
+    }
+
+    .btn-replace-toggle {
+      font-size: 11px;
+      color: #3CA9E2;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    /* Barra de reemplazo expandible */
+    .replace-bar {
+      display: none;
+      background-color: #131E25;
+      padding: 6px 14px;
+      gap: 8px;
+      border-bottom: 1px solid #1A2B34;
+      align-items: center;
+    }
+    .replace-bar.activa { display: flex; }
+    .replace-bar input {
+      background: #1A2B34;
+      border: 1px solid #233642;
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: #E0E2E4;
+      font-family: monospace;
+      font-size: 12px;
+      flex: 1;
+      outline: none;
+    }
+    .replace-bar button {
+      background: #1A2B34;
+      border: 1px solid #3CA9E2;
+      color: #3CA9E2;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
     }
 
     .btn-ejecutar-play {
@@ -197,6 +237,7 @@
       position: relative;
       background-color: #1A2B34;
       overflow: hidden;
+      touch-action: pan-y;
     }
 
     .CodeMirror {
@@ -233,8 +274,8 @@
       background-color: #16242D;
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
+      gap: 5px;
+      padding: 6px 8px;
       border-top: 1px solid #1A2B34;
       border-bottom: 1px solid #111B21;
       overflow-x: auto;
@@ -266,6 +307,7 @@
       border-color: #FF5198;
       transform: scale(0.95);
     }
+    .sym-btn.nav { color: #E09873; }
     .sym-btn.action { color: #28C0A9; font-size: 12px; }
     .sym-btn.kw { color: #FF5198; font-size: 12px; }
 
@@ -293,6 +335,28 @@
       user-select: none;
     }
 
+    .console-modes {
+      display: flex;
+      gap: 4px;
+      background: #111B21;
+      padding: 2px;
+      border-radius: 6px;
+    }
+    .console-mode-btn {
+      background: none;
+      border: none;
+      color: #8198a5;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .console-mode-btn.activo {
+      background: #1A2B34;
+      color: #3CA9E2;
+      font-weight: bold;
+    }
+
     .console-body {
       flex: 1;
       padding: 10px 14px;
@@ -305,11 +369,44 @@
       cursor: text;
     }
 
+    .console-bench {
+      font-size: 10px;
+      color: #28C0A9;
+      margin-top: 6px;
+      border-top: 1px dashed #233642;
+      padding-top: 4px;
+      display: block;
+    }
+
     .console-error-tag {
       color: #FF5198;
       cursor: pointer;
       text-decoration: underline;
       font-weight: bold;
+    }
+
+    .repl-input-container {
+      display: none;
+      align-items: center;
+      padding: 6px 12px;
+      background-color: #111B21;
+      border-top: 1px solid #1A2B34;
+    }
+    .repl-input-container.activo { display: flex; }
+    .repl-prompt-symbol {
+      color: #FF5198;
+      font-weight: bold;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+    .repl-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #28C0A9;
+      font-family: monospace;
+      font-size: 13px;
     }
 
     .bottom-bar {
@@ -583,7 +680,6 @@
     .context-btn:active { background: #1A2B34; }
     .context-btn.danger { color: #FF5198; border-color: rgba(255, 81, 152, 0.3); }
 
-    /* Snapshots list */
     .snapshot-item {
       background: #111B21;
       border: 1px solid #233642;
@@ -608,7 +704,6 @@
 </head>
 <body>
 
-  <!-- Input oculto para subir archivos -->
   <input type="file" id="inputSubirArchivos" multiple accept=".py,.json,.txt,.csv" style="display:none;">
 
   <!-- Overlay y Sidebar -->
@@ -623,8 +718,8 @@
       <button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
     </div>
     <div class="sidebar-backup-actions">
-      <button class="sidebar-btn" id="btnSubirArchivo" title="Subir archivo .py o JSON">📂 Importar</button>
-      <button class="sidebar-btn" id="btnExportarWorkspace" title="Descargar copia total">💾 Backup</button>
+      <button class="sidebar-btn" id="btnSubirArchivo" title="Subir archivo">📂 Importar</button>
+      <button class="sidebar-btn" id="btnExportarWorkspace" title="Descargar copia">💾 Backup</button>
     </div>
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
@@ -635,7 +730,7 @@
       <h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
       <div class="modal-input-group">
         <label>Nombre del archivo:</label>
-        <input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py" autocomplete="off">
+        <input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py o datos.txt" autocomplete="off">
       </div>
       <div class="modal-input-group">
         <label>Guardar en carpeta:</label>
@@ -682,7 +777,7 @@
     </div>
   </div>
 
-  <!-- Modal Snapshots / Historial (🔀) -->
+  <!-- Modal Snapshots (🔀) -->
   <div class="modal-overlay" id="modalSnapshots">
     <div class="modal-box">
       <h3>Historial de Versiones <span id="btnCerrarSnapshots" style="cursor:pointer; color:#FF5198;">✕</span></h3>
@@ -708,7 +803,7 @@
       <div class="modal-input-group">
         <label>Espacios de Tabulación:</label>
         <select id="cfgTabSize">
-          <option value="4">4 Espacios (Recomendado Python)</option>
+          <option value="4">4 Espacios (Recomendado)</option>
           <option value="2">2 Espacios</option>
         </select>
       </div>
@@ -735,12 +830,13 @@
   <div class="app-wrapper">
     <header class="top-toolbar">
       <button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
-      <button class="icon-btn" id="btnRamas" title="Historial de Versiones">🔀</button>
+      <button class="icon-btn" id="btnRamas" title="Historial">🔀</button>
       
       <div class="search-pill">
         <span>🔍</span>
         <input type="text" id="buscadorInput" placeholder="Buscar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <span class="search-badge" id="badgeCoincidencias">0/0</span>
+        <button class="btn-replace-toggle" id="btnToggleReplace" title="Reemplazar">⇄</button>
       </div>
 
       <button class="btn-ejecutar-play" id="btnEjecutar" title="Ejecutar">
@@ -749,15 +845,24 @@
       <button class="icon-btn" id="btnOpciones" title="Ajustes">•••</button>
     </header>
 
-    <!-- Contenedor de pestañas múltiples -->
+    <!-- Barra de Reemplazo -->
+    <div class="replace-bar" id="barraReemplazo">
+      <input type="text" id="inputReemplazo" placeholder="Reemplazar por..." autocomplete="off">
+      <button id="btnReemplazarUno">Uno</button>
+      <button id="btnReemplazarTodo">Todo</button>
+    </div>
+
+    <!-- Pestañas múltiples -->
     <div class="tab-bar" id="contenedorPestanas"></div>
 
-    <div class="editor-container">
+    <div class="editor-container" id="editorWrap">
       <textarea id="codigo"></textarea>
     </div>
 
     <!-- Barra de símbolos rápidos para teclado móvil -->
     <div class="symbols-bar" id="barraSimbolos">
+      <button class="sym-btn nav" data-sym="NAV_LEFT" title="Cursor Izquierda">◀</button>
+      <button class="sym-btn nav" data-sym="NAV_RIGHT" title="Cursor Derecha">▶</button>
       <button class="sym-btn action" data-sym="UNDO" title="Deshacer">↶</button>
       <button class="sym-btn action" data-sym="REDO" title="Rehacer">↷</button>
       <button class="sym-btn action" data-sym="TAB" title="Tabular">Tab</button>
@@ -783,11 +888,14 @@
       <button class="sym-btn kw" data-sym="print()">print</button>
     </div>
 
-    <!-- Terminal -->
+    <!-- Terminal & REPL -->
     <section class="console-section" id="seccionConsola">
       <div class="console-header">
-        <span style="font-weight: bold; color: #8198a5;">🖥 Consola</span>
-        <div style="display: flex; gap: 14px; align-items: center;">
+        <div class="console-modes">
+          <button class="console-mode-btn activo" id="btnModoSalida">📄 Salida</button>
+          <button class="console-mode-btn" id="btnModoRepl">💻 REPL</button>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
           <span id="estadoMotor" style="color: #28C0A9; font-size: 11px; cursor: pointer;">Listo ⚙️</span>
           <span id="btnLimpiarConsola" style="cursor: pointer; font-size: 14px;" title="Limpiar">🗑</span>
           <span id="flechaConsola" style="cursor: pointer; font-size: 14px; padding: 4px;" title="Ocultar / Mostrar">🔽</span>
@@ -795,6 +903,12 @@
       </div>
       
       <div class="console-body" id="salidaConsola"></div>
+
+      <!-- Input para modo REPL -->
+      <div class="repl-input-container" id="contenedorReplInput">
+        <span class="repl-prompt-symbol">&gt;&gt;&gt;</span>
+        <input type="text" class="repl-input" id="replInput" placeholder="Escribe código Python..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
       
       <div class="bottom-bar">
         <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
@@ -810,8 +924,8 @@
 
     // Persistencia Local
     let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
-      "prueba.py": "# Importando módulo local\nimport modulos.operaciones as op\n\nnombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}!')\nprint('5 + 3 =', op.sumar(5, 3))",
-      "modulos/operaciones.py": "# Módulo de operaciones matemáticas\ndef sumar(a, b):\n    return a + b\n\ndef restar(a, b):\n    return a - b"
+      "prueba.py": "# Demostración de Hardware iOS y Archivos Virtuales\nimport ios\nimport modulos.operaciones as op\n\n# Probar vibración y hardware\nios.vibrate(60)\nprint('Batería:', ios.get_battery())\n\n# Escritura de archivos locales con open()\nwith open('datos.txt', 'w') as f:\n    f.write('Guardado desde Python!')\n\nprint('5 + 3 =', op.sumar(5, 3))\nprint('Archivo datos.txt creado con éxito.')",
+      "modulos/operaciones.py": "def sumar(a, b):\n    return a + b\n\ndef restar(a, b):\n    return a - b"
     };
     let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
     let carpetasEstado = JSON.parse(localStorage.getItem('py_carpetas_estado')) || {};
@@ -828,7 +942,11 @@
     if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
 
     const salidaConsola = document.getElementById("salidaConsola");
-    
+    let modoConsolaActual = "salida"; // "salida" o "repl"
+    let historialRepl = [];
+    let indiceHistorialRepl = -1;
+
+    // Inicializar CodeMirror
     const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python", 
       theme: "prettier", 
@@ -838,7 +956,11 @@
       indentUnit: configuracionEditor.tabSize,
       autoCloseBrackets: true,
       inputStyle: "contenteditable",
-      extraKeys: {"Ctrl-Space": "autocomplete"}
+      extraKeys: {
+        "Ctrl-Space": "autocomplete",
+        "Cmd-Enter": () => ejecutarCodigo(),
+        "Ctrl-Enter": () => ejecutarCodigo()
+      }
     });
 
     editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
@@ -863,13 +985,27 @@
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
-    // --- BARRA DE SÍMBOLOS RÁPIDOS ---
+    // --- BARRA DE SÍMBOLOS RÁPIDOS Y NAVEGACIÓN ---
     function insertarSimbolo(sym) {
       editor.focus();
       const doc = editor.getDoc();
       const cursor = doc.getCursor();
 
       switch(sym) {
+        case 'NAV_LEFT':
+          if (cursor.ch > 0) doc.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
+          else if (cursor.line > 0) {
+            let prevLineLen = editor.getLine(cursor.line - 1).length;
+            doc.setCursor({ line: cursor.line - 1, ch: prevLineLen });
+          }
+          break;
+        case 'NAV_RIGHT':
+          let curLineLen = editor.getLine(cursor.line).length;
+          if (cursor.ch < curLineLen) doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+          else if (cursor.line < editor.lineCount() - 1) {
+            doc.setCursor({ line: cursor.line + 1, ch: 0 });
+          }
+          break;
         case 'TAB':
           doc.replaceSelection(" ".repeat(configuracionEditor.tabSize || 4));
           break;
@@ -1060,13 +1196,13 @@
       const carpeta = document.getElementById('selectorCarpetaDestino').value;
 
       if (!nombre) return alert("Escribe un nombre para el archivo.");
-      if (!nombre.endsWith('.py')) nombre += '.py';
+      if (!nombre.includes('.')) nombre += '.py';
 
       const rutaCompleta = carpeta ? `${carpeta}/${nombre}` : nombre;
 
-      if (sistemaArchivos[rutaCompleta]) return alert("Ya existe un archivo con ese nombre en esa ubicación.");
+      if (sistemaArchivos[rutaCompleta]) return alert("Ya existe un archivo con ese nombre.");
 
-      sistemaArchivos[rutaCompleta] = "# Nuevo script Python\n";
+      sistemaArchivos[rutaCompleta] = nombre.endsWith('.py') ? "# Nuevo script Python\n" : "";
       localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
       
       document.getElementById('modalCrearArchivo').classList.remove('activo');
@@ -1076,11 +1212,11 @@
       } else {
         renderizarPestanas();
         renderizarArchivos();
-        alert(`Archivo "${rutaCompleta}" creado correctamente.`);
+        alert(`Archivo "${rutaCompleta}" creado.`);
       }
     }
 
-    // --- LONG PRESS DETECTOR (500ms) ---
+    // --- DETECTOR DE LONG PRESS (500ms) ---
     function configurarLongPress(elemento, callbackClick, callbackLongPress) {
       let pressTimer = null;
       let ejecutoLongPress = false;
@@ -1152,7 +1288,7 @@
 
       titulo.innerHTML = `${tipo === 'carpeta' ? '📁 Carpeta' : '📄 Archivo'} <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span>`;
       subtitulo.textContent = ruta;
-      btnDescargar.textContent = tipo === 'carpeta' ? '⬇️ Descargar todo (.json)' : '⬇️ Descargar (.py)';
+      btnDescargar.textContent = tipo === 'carpeta' ? '⬇️ Descargar todo (.json)' : '⬇️ Descargar archivo';
 
       document.getElementById('modalContextual').classList.add('activo');
       document.getElementById('btnCerrarContextual').onclick = () => {
@@ -1169,7 +1305,7 @@
         if (navigator.share) {
           try {
             const nombreArchivo = ruta.split('/').pop();
-            const file = new File([contenido], nombreArchivo, { type: 'text/x-python' });
+            const file = new File([contenido], nombreArchivo, { type: 'text/plain' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
               await navigator.share({ files: [file], title: nombreArchivo });
             } else {
@@ -1179,9 +1315,7 @@
             if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
           }
         } else {
-          navigator.clipboard.writeText(contenido).then(() => {
-            alert("Código copiado al portapapeles.");
-          });
+          navigator.clipboard.writeText(contenido).then(() => alert("Copiado al portapapeles."));
         }
       } else {
         const archivosCarpeta = {};
@@ -1196,9 +1330,7 @@
             if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
           }
         } else {
-          navigator.clipboard.writeText(dataJson).then(() => {
-            alert("Archivos copiados en formato JSON.");
-          });
+          navigator.clipboard.writeText(dataJson).then(() => alert("Copiado al portapapeles en JSON."));
         }
       }
     }
@@ -1209,7 +1341,7 @@
 
       if (tipo === 'archivo') {
         const contenido = sistemaArchivos[ruta] || "";
-        const blob = new Blob([contenido], { type: 'text/x-python;charset=utf-8' });
+        const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1258,7 +1390,6 @@
       const contenedor = document.getElementById('listaArchivos');
       contenedor.innerHTML = '';
 
-      // 1. Carpetas
       carpetasCreadas.forEach(carpeta => {
         const estaAbierta = carpetasEstado[carpeta] !== false;
 
@@ -1327,7 +1458,6 @@
         contenedor.appendChild(folderWrap);
       });
 
-      // 2. Archivos en Raíz
       const archivosRaiz = Object.keys(sistemaArchivos).filter(k => !k.includes('/'));
       if (archivosRaiz.length > 0) {
         const rootHeader = document.createElement('div');
@@ -1383,7 +1513,7 @@
     }
 
     function eliminarCarpeta(carpeta) {
-      if (confirm(`¿Eliminar la carpeta "${carpeta}" y todos los archivos contenidos?`)) {
+      if (confirm(`¿Eliminar la carpeta "${carpeta}" y todos sus archivos?`)) {
         carpetasCreadas = carpetasCreadas.filter(c => c !== carpeta);
         delete carpetasEstado[carpeta];
         localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
@@ -1411,7 +1541,7 @@
       }
     }
 
-    // --- RESPALDO E IMPORTACIÓN (BACKUP / RESTORE) ---
+    // --- RESPALDO E IMPORTACIÓN ---
     function exportarWorkspaceCompleto() {
       const backupData = {
         fecha: new Date().toISOString(),
@@ -1464,7 +1594,6 @@
             } catch (err) {}
           }
 
-          // Si es script Python o texto normal
           sistemaArchivos[file.name] = contenido;
           localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
           abrirEnPestana(file.name);
@@ -1476,7 +1605,7 @@
       e.target.value = '';
     });
 
-    // --- SNAPSHOTS / HISTORIAL (🔀) ---
+    // --- SNAPSHOTS (🔀) ---
     function guardarSnapshot(etiqueta = "Auto") {
       if (!archivoActual) return;
       const key = `py_snap_${archivoActual}`;
@@ -1487,7 +1616,7 @@
         codigo: editor.getValue()
       };
       snapshots.unshift(nuevo);
-      if (snapshots.length > 10) snapshots.pop(); // Mantener hasta 10 versiones
+      if (snapshots.length > 10) snapshots.pop();
       localStorage.setItem(key, JSON.stringify(snapshots));
     }
 
@@ -1547,9 +1676,11 @@
       document.getElementById('modalAjustes').classList.remove('activo');
     }
 
-    // --- BUSCADOR ---
+    // --- BUSCADOR Y REEMPLAZO ---
     const buscadorInput = document.getElementById('buscadorInput');
     const badgeCoincidencias = document.getElementById('badgeCoincidencias');
+    const barraReemplazo = document.getElementById('barraReemplazo');
+    const inputReemplazo = document.getElementById('inputReemplazo');
     let listaMarcadores = [];
     let coincidencias = [];
     let indiceActual = -1;
@@ -1607,6 +1738,30 @@
 
     buscadorInput.addEventListener('input', () => actualizarBusqueda(false));
 
+    document.getElementById('btnToggleReplace').addEventListener('click', () => {
+      barraReemplazo.classList.toggle('activa');
+    });
+
+    document.getElementById('btnReemplazarUno').addEventListener('click', () => {
+      if (indiceActual >= 0 && coincidencias[indiceActual]) {
+        const match = coincidencias[indiceActual];
+        const nuevoTexto = inputReemplazo.value;
+        editor.replaceRange(nuevoTexto, match.from, match.to);
+        actualizarBusqueda(false);
+      }
+    });
+
+    document.getElementById('btnReemplazarTodo').addEventListener('click', () => {
+      const query = buscadorInput.value;
+      const nuevoTexto = inputReemplazo.value;
+      if (!query) return;
+      let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
+      while (cursor.findNext()) {
+        cursor.replace(nuevoTexto);
+      }
+      actualizarBusqueda(false);
+    });
+
     function bindAccion(id, fn) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1618,11 +1773,13 @@
       const modal = document.getElementById('modalListo');
       const info = document.getElementById('infoDiagnostico');
       info.innerHTML = `
-        • <strong>Motor:</strong> Skulpt (Python 3.x Navegador)<br>
+        • <strong>Motor:</strong> Skulpt 1.2 (Timeout 6s)<br>
+        • <strong>Módulo iOS:</strong> Habilitado (import ios)<br>
+        • <strong>I/O Virtual:</strong> Habilitado (open/write)<br>
         • <strong>Archivo en uso:</strong> ${archivoActual}<br>
-        • <strong>Pestañas abiertas:</strong> ${pestanasAbiertas.length}<br>
+        • <strong>Pestañas:</strong> ${pestanasAbiertas.length}<br>
         • <strong>Archivos totales:</strong> ${Object.keys(sistemaArchivos).length}<br>
-        • <strong>Modo offline:</strong> ${navigator.onLine ? 'Conectado (PWA Lista)' : 'Activo (Sin conexión)'}
+        • <strong>Estado Red:</strong> ${navigator.onLine ? 'Online' : 'Offline (Cache PWA)'}
       `;
       modal.classList.add('activo');
     }
@@ -1635,19 +1792,9 @@
       setTimeout(() => editor.refresh(), 260);
     }
 
-    // --- MOTOR SKULPT CON SALTO A LÍNEA DE ERROR ---
-    function ejecutarCodigo() {
-      guardarSnapshot("Pre-run");
-
-      const seccion = document.getElementById('seccionConsola');
-      if (seccion.classList.contains('oculta')) {
-        seccion.classList.remove('oculta');
-        document.getElementById('flechaConsola').textContent = '🔽';
-        setTimeout(() => editor.refresh(), 260);
-      }
-
-      salidaConsola.innerHTML = "";
-      let codigo = editor.getValue();
+    // --- MÓDULO NATIVO SKULPT: 'ios' & VFS ---
+    function configurarModulosSkulpt() {
+      Sk.execLimit = 6000; // Guardia anti-bucles: 6s máx
 
       Sk.configure({
         output: (t) => {
@@ -1655,12 +1802,36 @@
           salidaConsola.scrollTop = salidaConsola.scrollHeight;
         },
         read: (x) => {
+          // Módulo Puente Hardware iPhone: 'import ios'
+          if (x === "src/lib/ios.js" || x === "./ios.js" || x === "ios.js" || x === "ios") {
+            return `
+              var $builtinmodule = function (name) {
+                var mod = {__name__: new Sk.builtin.str("ios")};
+                mod.vibrate = new Sk.builtin.func(function(ms) {
+                  var dur = (ms && ms.v !== undefined) ? ms.v : 50;
+                  if (navigator.vibrate) navigator.vibrate(dur);
+                  return Sk.builtin.none.none$;
+                });
+                mod.get_battery = new Sk.builtin.func(function() {
+                  return new Sk.builtin.str("iOS PWA Batería activa");
+                });
+                mod.clipboard_copy = new Sk.builtin.func(function(txt) {
+                  if (txt && txt.v !== undefined) navigator.clipboard.writeText(txt.v);
+                  return Sk.builtin.none.none$;
+                });
+                return mod;
+              };
+            `;
+          }
+
+          // Librería estándar de Skulpt
           if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"] !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
             return Sk.builtinFiles["files"][x];
           }
 
           let clean = x.replace(/^src\/lib\//, '').replace(/^\.\//, '');
 
+          // Búsqueda en sistema de archivos local
           if (sistemaArchivos[clean] !== undefined) return sistemaArchivos[clean];
           if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
 
@@ -1674,7 +1845,7 @@
             if (sistemaArchivos[rutaRelativa + '.py'] !== undefined) return sistemaArchivos[rutaRelativa + '.py'];
           }
 
-          throw "Módulo o archivo no encontrado: '" + x + "'";
+          throw "Módulo no encontrado: '" + x + "'";
         },
         inputfunTakesPrompt: true,
         inputfun: (promptText) => {
@@ -1699,8 +1870,78 @@
           });
         }
       });
+    }
 
-      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigo, true))
+    // --- PREPARAR ENTORNO VIRTUAL CON OPEN() EMULADO ---
+    function generarCodigoConVFS(codigoOriginal) {
+      window.__vfs_write = function(filename, content, mode) {
+        let fn = String(filename).replace(/^['"]|['"]$/g, '');
+        if (mode === 'a' && sistemaArchivos[fn]) {
+          sistemaArchivos[fn] += String(content);
+        } else {
+          sistemaArchivos[fn] = String(content);
+        }
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+        renderizarArchivos();
+      };
+
+      window.__vfs_read = function(filename) {
+        let fn = String(filename).replace(/^['"]|['"]$/g, '');
+        if (sistemaArchivos[fn] !== undefined) return sistemaArchivos[fn];
+        throw new Error("No such file: " + fn);
+      };
+
+      const emulacionOpen = `
+import js
+class _VFSFile:
+    def __init__(self, filename, mode='r'):
+        self.filename = filename
+        self.mode = mode
+        self.content = ''
+        if 'r' in mode:
+            self.content = js.window.__vfs_read(filename)
+    def read(self):
+        return self.content
+    def write(self, data):
+        js.window.__vfs_write(self.filename, str(data), self.mode)
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+def open(filename, mode='r'):
+    return _VFSFile(filename, mode)
+\n`;
+      return emulacionOpen + codigoOriginal;
+    }
+
+    // --- EJECUTOR PYTHON CON PROFILER Y CONTROL DE ERRORES ---
+    function ejecutarCodigo() {
+      guardarSnapshot("Pre-run");
+
+      const seccion = document.getElementById('seccionConsola');
+      if (seccion.classList.contains('oculta')) {
+        seccion.classList.remove('oculta');
+        document.getElementById('flechaConsola').textContent = '🔽';
+        setTimeout(() => editor.refresh(), 260);
+      }
+
+      salidaConsola.innerHTML = "";
+      configurarModulosSkulpt();
+
+      let codigoPuro = editor.getValue();
+      let codigoConVFS = generarCodigoConVFS(codigoPuro);
+      let tInicio = performance.now();
+
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigoConVFS, true))
+        .then(() => {
+          let tFin = performance.now();
+          let benchSpan = document.createElement("span");
+          benchSpan.className = "console-bench";
+          benchSpan.textContent = `⏱️ Ejecutado en ${(tFin - tInicio).toFixed(1)} ms`;
+          salidaConsola.appendChild(benchSpan);
+          salidaConsola.scrollTop = salidaConsola.scrollHeight;
+        })
         .catch((err) => {
           let errStr = err.toString();
           let lineMatch = errStr.match(/on line (\d+)/i) || errStr.match(/line (\d+)/i);
@@ -1709,13 +1950,15 @@
           errContainer.style.color = "#FF5198";
           errContainer.style.marginTop = "4px";
 
+          // Ajuste del número de línea compensando el shim VFS (18 líneas inyectadas)
           if (lineMatch && lineMatch[1]) {
-            let numLinea = parseInt(lineMatch[1], 10);
-            errContainer.innerHTML = `[Error] ${errStr} <br><span class="console-error-tag">👉 Toca para ir a la Línea ${numLinea}</span>`;
+            let numLineaInyectada = parseInt(lineMatch[1], 10);
+            let numLineaReal = Math.max(1, numLineaInyectada - 18);
+            errContainer.innerHTML = `[Error] ${errStr} <br><span class="console-error-tag">👉 Toca para ir a la Línea ${numLineaReal}</span>`;
             errContainer.querySelector('.console-error-tag').onclick = () => {
               editor.focus();
-              editor.setCursor({ line: numLinea - 1, ch: 0 });
-              editor.scrollIntoView({ line: numLinea - 1, ch: 0 }, 100);
+              editor.setCursor({ line: numLineaReal - 1, ch: 0 });
+              editor.scrollIntoView({ line: numLineaReal - 1, ch: 0 }, 100);
             };
           } else {
             errContainer.textContent = `[Error] ${errStr}`;
@@ -1726,7 +1969,58 @@
         });
     }
 
-    // Bindings de Eventos
+    // --- MODO REPL INTERACTIVO (>>>) ---
+    const btnModoSalida = document.getElementById('btnModoSalida');
+    const btnModoRepl = document.getElementById('btnModoRepl');
+    const contenedorReplInput = document.getElementById('contenedorReplInput');
+    const replInput = document.getElementById('replInput');
+
+    function alternarModoConsola(modo) {
+      modoConsolaActual = modo;
+      if (modo === 'repl') {
+        btnModoRepl.classList.add('activo');
+        btnModoSalida.classList.remove('activo');
+        contenedorReplInput.classList.add('activo');
+        salidaConsola.innerHTML = "Python 3.x REPL Interactivo Móvil\nUsa enter para ejecutar comandos.\n\n";
+        replInput.focus();
+      } else {
+        btnModoSalida.classList.add('activo');
+        btnModoRepl.classList.remove('activo');
+        contenedorReplInput.classList.remove('activo');
+      }
+    }
+
+    btnModoSalida.addEventListener('click', () => alternarModoConsola('salida'));
+    btnModoRepl.addEventListener('click', () => alternarModoConsola('repl'));
+
+    replInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        let linea = replInput.value.trim();
+        if (!linea) return;
+
+        historialRepl.push(linea);
+        indiceHistorialRepl = historialRepl.length;
+
+        salidaConsola.appendChild(document.createTextNode(`>>> ${linea}\n`));
+        replInput.value = '';
+
+        configurarModulosSkulpt();
+        let wrapCode = `try:\n    __r = eval(${JSON.stringify(linea)})\n    if __r is not None: print(__r)\nexcept:\n    exec(${JSON.stringify(linea)})\n`;
+
+        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, wrapCode, true))
+          .catch((err) => {
+            let errSpan = document.createElement("span");
+            errSpan.style.color = "#FF5198";
+            errSpan.textContent = err.toString() + "\n";
+            salidaConsola.appendChild(errSpan);
+          })
+          .finally(() => {
+            salidaConsola.scrollTop = salidaConsola.scrollHeight;
+          });
+      }
+    });
+
+    // Bindings de Eventos Generales
     bindAccion('btnCarpeta', toggleSidebar);
     bindAccion('btnCerrarSidebar', toggleSidebar);
     bindAccion('overlay', toggleSidebar);
@@ -1750,7 +2044,7 @@
       document.getElementById('modalListo').classList.remove('activo');
     });
 
-    // Eventos Snapshots y Ajustes
+    // Snapshots y Ajustes
     bindAccion('btnRamas', abrirModalSnapshots);
     bindAccion('btnCerrarSnapshots', () => document.getElementById('modalSnapshots').classList.remove('activo'));
     bindAccion('btnCrearSnapshotManual', () => {
@@ -1761,7 +2055,7 @@
     bindAccion('btnCerrarAjustes', () => document.getElementById('modalAjustes').classList.remove('activo'));
     bindAccion('btnGuardarAjustes', guardarAjustes);
 
-    // Eventos Menú Contextual
+    // Menú Contextual
     bindAccion('btnCtxCompartir', ejecutarCompartirContextual);
     bindAccion('btnCtxDescargar', ejecutarDescargarContextual);
     bindAccion('btnCtxEliminar', ejecutarEliminarContextual);

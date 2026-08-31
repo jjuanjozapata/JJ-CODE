@@ -1803,7 +1803,6 @@
     // --- SISTEMA VIRTUAL DE ARCHIVOS (VFS) Y MÓDULOS SKULPT ---
     function configurarModulosSkulpt() {
       Sk.execLimit = 6000;
-      Sk.sysmodules = new Sk.builtin.dict([]);
 
       // 1. Registro del módulo puente iPhone: 'import ios'
       Sk.builtinFiles = Sk.builtinFiles || {};
@@ -1859,7 +1858,7 @@
               editor.setValue(sistemaArchivos[fn]);
             }
             renderizarArchivos();
-            return Sk.builtin.none.none$;
+            return new Sk.builtin.int_(strData.length);
           });
         }
         if (name === "read") {
@@ -1966,14 +1965,17 @@
             input.focus();
             salidaConsola.scrollTop = salidaConsola.scrollHeight;
 
+            const responder = () => {
+              let val = input.value;
+              input.remove();
+              salidaConsola.appendChild(document.createTextNode(val + "\n"));
+              resolve(val);
+            };
+
             input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                let val = input.value;
-                input.remove();
-                salidaConsola.appendChild(document.createTextNode(val + "\n"));
-                resolve(val);
-              }
+              if (e.key === "Enter" || e.keyCode === 13) responder();
             });
+            input.addEventListener("change", responder, { once: true });
           });
         }
       });
@@ -1982,6 +1984,7 @@
     // --- EJECUTOR PYTHON CON SALTO EXACTO A LÍNEA ---
     function ejecutarCodigo() {
       guardarSnapshot("Pre-run");
+      alternarModoConsola('salida');
 
       const seccion = document.getElementById('seccionConsola');
       if (seccion.classList.contains('oculta')) {

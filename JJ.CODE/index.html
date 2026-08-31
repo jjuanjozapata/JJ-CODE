@@ -9,15 +9,14 @@
   <link rel="apple-touch-icon" href="icono.png">
   <link rel="manifest" href="manifest.json">
   
-  <!-- CodeMirror: Editor base y autocompletado -->
+  <!-- CodeMirror: Editor y utilidades -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
   
-  <!-- Skulpt: El motor para la terminal interactiva -->
+  <!-- Skulpt: Motor Python offline interactivo -->
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
   
-  <!-- Librerías del editor -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
@@ -25,92 +24,257 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { background-color: #111B21; color: #E0E2E4; font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    
-    .top-toolbar { background-color: #16242D; display: flex; align-items: center; padding: 10px 14px; gap: 12px; border-bottom: 1px solid #1A2B34; }
-    .icon-btn { background: none; border: none; color: #5C7482; font-size: 18px; cursor: pointer; }
-    .search-pill { background-color: #1A2B34; border-radius: 20px; display: flex; align-items: center; padding: 6px 12px; flex: 1; gap: 6px; color: #5C7482; }
-    .search-pill input { background: transparent; border: none; outline: none; color: #E0E2E4; width: 100%; font-size: 13px; pointer-events: none; }
-    
-    .btn-ejecutar-play { background-color: #FF5198; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 81, 152, 0.4); }
-    .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
-    
-    .tab-bar { background-color: #111B21; display: flex; border-bottom: 1px solid #1A2B34; }
-    .tab { background-color: #1A2B34; color: #3CA9E2; padding: 8px 16px; font-family: monospace; font-size: 13px; display: flex; align-items: center; gap: 8px; border-top: 2px solid #FF5198; }
-    
-    /* El editor toma el espacio sobrante. Fluidez táctil arreglada */
-    .editor-container { flex: 1; overflow-y: auto; background-color: #1A2B34; -webkit-overflow-scrolling: touch; }
-    .CodeMirror { height: 100% !important; font-family: monospace; font-size: 14px; }
-    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fijar la ventana completa contra rebotes en iPhone */
+    html, body {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background-color: #111B21;
+      color: #E0E2E4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .app-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Barra superior fija */
+    .top-toolbar {
+      flex-shrink: 0;
+      background-color: #16242D;
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      gap: 12px;
+      border-bottom: 1px solid #1A2B34;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #5C7482;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .search-pill {
+      background-color: #1A2B34;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      flex: 1;
+      gap: 6px;
+      color: #5C7482;
+    }
+
+    .search-pill input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #E0E2E4;
+      width: 100%;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .btn-ejecutar-play {
+      background-color: #FF5198;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255, 81, 152, 0.4);
+    }
+
+    .btn-ejecutar-play:active {
+      transform: scale(0.92);
+      background-color: #E03E7E;
+    }
+
+    /* Pestaña fija */
+    .tab-bar {
+      flex-shrink: 0;
+      background-color: #111B21;
+      display: flex;
+      border-bottom: 1px solid #1A2B34;
+    }
+
+    .tab {
+      background-color: #1A2B34;
+      color: #3CA9E2;
+      padding: 8px 16px;
+      font-family: monospace;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 2px solid #FF5198;
+    }
+
+    /* Contenedor del editor de código */
+    .editor-container {
+      flex: 1;
+      position: relative;
+      background-color: #1A2B34;
+      overflow: hidden;
+    }
+
+    .CodeMirror {
+      height: 100% !important;
+      position: absolute !important;
+      top: 0; bottom: 0; left: 0; right: 0;
+      font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+    }
+
+    /* Estilos Tema Prettier */
     .cm-s-prettier.CodeMirror { background: #1A2B34; color: #E0E2E4; }
     .cm-s-prettier .CodeMirror-gutters { background: #1A2B34; border-right: 1px solid #233642; }
     .cm-s-prettier .CodeMirror-linenumber { color: #5C7482; }
     .cm-s-prettier .CodeMirror-cursor { border-left: 2px solid #FF5198; }
-    .cm-s-prettier span.cm-keyword { color: #FF5198; font-weight: bold; } 
-    .cm-s-prettier span.cm-string { color: #28C0A9; } 
-    .cm-s-prettier span.cm-number { color: #E09873; } 
-    .cm-s-prettier span.cm-def { color: #3CA9E2; } 
+    .cm-s-prettier span.cm-keyword { color: #FF5198; font-weight: bold; }
+    .cm-s-prettier span.cm-string { color: #28C0A9; }
+    .cm-s-prettier span.cm-number { color: #E09873; }
+    .cm-s-prettier span.cm-def { color: #3CA9E2; }
     .cm-s-prettier span.cm-variable { color: #E0E2E4; }
-    .cm-s-prettier span.cm-variable-2 { color: #33CCFF; } 
+    .cm-s-prettier span.cm-variable-2 { color: #33CCFF; }
     .cm-s-prettier span.cm-comment { color: #697A85; font-style: italic; }
     .cm-s-prettier span.cm-operator { color: #FF5198; }
     .cm-s-prettier span.cm-builtin { color: #3CA9E2; }
-    
-    /* Terminal ajustada al 50% con transición suave para ocultar */
-    .console-section { height: 50%; background-color: #0B1216; border-top: 1px solid #233642; display: flex; flex-direction: column; transition: height 0.3s ease; }
-    .console-section.oculta { height: 35px; } /* Solo se ve la barra superior cuando se oculta */
-    
-    .console-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; font-size: 12px; color: #5C7482; border-bottom: 1px solid #111B21; height: 35px; }
-    
-    /* Fluidez táctil arreglada para la terminal */
-    .console-body { flex: 1; padding: 10px 14px; font-family: monospace; font-size: 13px; color: #E0E2E4; overflow-y: auto; white-space: pre-wrap; cursor: text; -webkit-overflow-scrolling: touch; }
-    
-    .bottom-bar { background-color: #111B21; padding: 6px 14px; display: flex; justify-content: space-between; font-size: 11px; color: #3CA9E2; font-family: monospace; border-top: 1px solid #1A2B34; }
-    
-    .terminal-input { background: transparent; border: none; outline: none; color: #28C0A9; font-family: monospace; font-size: 13px; width: 120px; margin-left: 2px; }
+
+    /* Sección de Consola / Terminal */
+    .console-section {
+      flex-shrink: 0;
+      height: 48%;
+      background-color: #0B1216;
+      border-top: 1px solid #233642;
+      display: flex;
+      flex-direction: column;
+      transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Estado oculto: solo muestra la barrita de control */
+    .console-section.oculta {
+      height: 38px;
+    }
+
+    .console-header {
+      flex-shrink: 0;
+      height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 12px;
+      color: #5C7482;
+      border-bottom: 1px solid #111B21;
+      user-select: none;
+    }
+
+    .console-body {
+      flex: 1;
+      padding: 10px 14px;
+      font-family: 'SF Mono', Menlo, monospace;
+      font-size: 13px;
+      color: #E0E2E4;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      -webkit-overflow-scrolling: touch;
+      cursor: text;
+    }
+
+    .bottom-bar {
+      flex-shrink: 0;
+      height: 28px;
+      background-color: #111B21;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #3CA9E2;
+      font-family: monospace;
+      border-top: 1px solid #1A2B34;
+    }
+
+    .terminal-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #28C0A9;
+      font-family: monospace;
+      font-size: 13px;
+      width: 140px;
+      margin-left: 2px;
+    }
   </style>
 </head>
 <body>
 
-  <header class="top-toolbar">
-    <button class="icon-btn">📁</button>
-    <button class="icon-btn">🔀</button>
-    <div class="search-pill">
-      <span>🔍</span>
-      <input type="text" value="prueba.py">
-    </div>
-    <button class="btn-ejecutar-play" onclick="ejecutarCodigo()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    </button>
-    <button class="icon-btn">•••</button>
-  </header>
-
-  <div class="tab-bar">
-    <div class="tab"><span>&lt;/&gt; prueba.py</span></div>
-  </div>
-
-  <div class="editor-container">
-    <textarea id="codigo">nombre = input('Ingresa tu nombre: ')
-print(f"Hola {nombre}")</textarea>
-  </div>
-
-  <section class="console-section" id="seccionConsola">
-    <div class="console-header">
-      <span>🖥 Consola</span>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <span id="estadoMotor" style="color: #28C0A9;">Skulpt Listo</span>
-        <span style="cursor: pointer; font-size: 14px;" onclick="document.getElementById('salidaConsola').innerHTML=''">🗑</span>
-        <span style="cursor: pointer; font-size: 14px;" onclick="toggleConsola()" id="flechaConsola">🔽</span>
+  <div class="app-wrapper">
+    <!-- Barra superior fija -->
+    <header class="top-toolbar">
+      <button class="icon-btn">📁</button>
+      <button class="icon-btn">🔀</button>
+      <div class="search-pill">
+        <span>🔍</span>
+        <input type="text" value="prueba.py">
       </div>
+      <button class="btn-ejecutar-play" onclick="ejecutarCodigo()" title="Ejecutar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="icon-btn">•••</button>
+    </header>
+
+    <!-- Pestaña de archivo -->
+    <div class="tab-bar">
+      <div class="tab"><span>&lt;/&gt; prueba.py</span></div>
     </div>
-    
-    <div class="console-body" id="salidaConsola" onclick="enfocarInput()"></div>
-    
-    <div class="bottom-bar">
-      <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
+
+    <!-- Área del Editor (fija arriba) -->
+    <div class="editor-container">
+      <textarea id="codigo">nombre = input('Ingresa tu nombre: ')
+print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
     </div>
-  </section>
+
+    <!-- Terminal con botón de ocultar/mostrar -->
+    <section class="console-section" id="seccionConsola">
+      <div class="console-header">
+        <span style="font-weight: bold; color: #8198a5;">🖥 Consola</span>
+        <div style="display: flex; gap: 14px; align-items: center;">
+          <span id="estadoMotor" style="color: #28C0A9; font-size: 11px;">Listo</span>
+          <span style="cursor: pointer; font-size: 14px;" onclick="limpiarConsola()" title="Limpiar">🗑</span>
+          <span style="cursor: pointer; font-size: 14px; padding: 4px;" onclick="toggleConsola()" id="flechaConsola" title="Ocultar / Mostrar">🔽</span>
+        </div>
+      </div>
+      
+      <div class="console-body" id="salidaConsola" onclick="enfocarInput()"></div>
+      
+      <div class="bottom-bar">
+        <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
+      </div>
+    </section>
+  </div>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -119,17 +283,19 @@ print(f"Hola {nombre}")</textarea>
 
     const salidaConsola = document.getElementById("salidaConsola");
     
+    // Editor CodeMirror optimizado para móvil
     const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python", 
       theme: "prettier", 
       lineNumbers: true, 
       lineWrapping: true, 
       autoCloseBrackets: true,
+      inputStyle: "contenteditable", // Mejora notablemente la precisión táctil en Safari iOS
       extraKeys: {"Ctrl-Space": "autocomplete"}
     });
 
     editor.on("inputRead", function(cm, change) {
-        if (change.text[0].match(/[a-zA-Z_]/)) { cm.showHint({completeSingle: false}); }
+      if (change.text[0].match(/[a-zA-Z_]/)) { cm.showHint({completeSingle: false}); }
     });
 
     editor.on("cursorActivity", () => {
@@ -138,77 +304,92 @@ print(f"Hola {nombre}")</textarea>
     });
 
     function enfocarInput() {
-        const inputTerminal = document.querySelector('.terminal-input');
-        if (inputTerminal) inputTerminal.focus();
+      const inputTerminal = document.querySelector('.terminal-input');
+      if (inputTerminal) inputTerminal.focus();
     }
 
     function toggleConsola() {
-        const seccion = document.getElementById('seccionConsola');
-        const flecha = document.getElementById('flechaConsola');
-        seccion.classList.toggle('oculta');
-        
-        if (seccion.classList.contains('oculta')) {
-            flecha.textContent = '🔼';
-        } else {
-            flecha.textContent = '🔽';
-        }
+      const seccion = document.getElementById('seccionConsola');
+      const flecha = document.getElementById('flechaConsola');
+      seccion.classList.toggle('oculta');
+      
+      const estaOculta = seccion.classList.contains('oculta');
+      flecha.textContent = estaOculta ? '🔼' : '🔽';
+      
+      // Reajusta el tamaño del editor sin tirones
+      setTimeout(() => editor.refresh(), 260);
+    }
+
+    function limpiarConsola() {
+      salidaConsola.innerHTML = "";
     }
 
     function leerArchivo(archivo) {
-        if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][archivo] === undefined) {
-            throw "Archivo no encontrado: '" + archivo + "'";
-        }
-        return Sk.builtinFiles["files"][archivo];
+      if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][archivo] === undefined) {
+        throw "Archivo no encontrado: '" + archivo + "'";
+      }
+      return Sk.builtinFiles["files"][archivo];
     }
 
     function ejecutarCodigo() {
-        // Al ejecutar, nos aseguramos de que la consola esté abierta
-        const seccion = document.getElementById('seccionConsola');
+      const seccion = document.getElementById('seccionConsola');
+      const flecha = document.getElementById('flechaConsola');
+      
+      // Si está oculta, abrirla automáticamente al ejecutar
+      if (seccion.classList.contains('oculta')) {
         seccion.classList.remove('oculta');
-        document.getElementById('flechaConsola').textContent = '🔽';
+        flecha.textContent = '🔽';
+        setTimeout(() => editor.refresh(), 260);
+      }
 
-        salidaConsola.innerHTML = "";
-        let codigo = editor.getValue();
+      salidaConsola.innerHTML = "";
+      let codigo = editor.getValue();
 
-        Sk.configure({
-            output: function(texto) {
-                salidaConsola.appendChild(document.createTextNode(texto));
-            },
-            read: leerArchivo,
-            inputfunTakesPrompt: true,
-            inputfun: function(promptText) {
-                return new Promise((resolve, reject) => {
-                    salidaConsola.appendChild(document.createTextNode(promptText));
-                    
-                    let campoInput = document.createElement("input");
-                    campoInput.type = "text";
-                    campoInput.className = "terminal-input";
-                    campoInput.setAttribute("autocomplete", "off");
-                    
-                    salidaConsola.appendChild(campoInput);
-                    campoInput.focus();
+      Sk.configure({
+        output: function(texto) {
+          salidaConsola.appendChild(document.createTextNode(texto));
+          salidaConsola.scrollTop = salidaConsola.scrollHeight;
+        },
+        read: leerArchivo,
+        inputfunTakesPrompt: true,
+        inputfun: function(promptText) {
+          return new Promise((resolve) => {
+            salidaConsola.appendChild(document.createTextNode(promptText));
+            
+            let campoInput = document.createElement("input");
+            campoInput.type = "text";
+            campoInput.className = "terminal-input";
+            campoInput.setAttribute("autocomplete", "off");
+            campoInput.setAttribute("autocorrect", "off");
+            campoInput.setAttribute("autocapitalize", "off");
+            campoInput.setAttribute("spellcheck", "false");
+            
+            salidaConsola.appendChild(campoInput);
+            campoInput.focus();
+            salidaConsola.scrollTop = salidaConsola.scrollHeight;
 
-                    campoInput.addEventListener("keydown", function(e) {
-                        if (e.key === "Enter") {
-                            let valor = campoInput.value;
-                            campoInput.remove();
-                            salidaConsola.appendChild(document.createTextNode(valor + "\n"));
-                            resolve(valor);
-                        }
-                    });
-                });
-            }
-        });
+            campoInput.addEventListener("keydown", function(e) {
+              if (e.key === "Enter") {
+                let valor = campoInput.value;
+                campoInput.remove();
+                salidaConsola.appendChild(document.createTextNode(valor + "\n"));
+                resolve(valor);
+              }
+            });
+          });
+        }
+      });
 
-        Sk.misceval.asyncToPromise(function() {
-            return Sk.importMainWithBody("<stdin>", false, codigo, true);
-        }).catch(function(err) {
-            let errorSpan = document.createElement("span");
-            errorSpan.style.color = "#FF5198";
-            errorSpan.textContent = "\n[Error] " + err.toString() + "\n";
-            salidaConsola.appendChild(errorSpan);
-        });
+      Sk.misceval.asyncToPromise(function() {
+        return Sk.importMainWithBody("<stdin>", false, codigo, true);
+      }).catch(function(err) {
+        let errorSpan = document.createElement("span");
+        errorSpan.style.color = "#FF5198";
+        errorSpan.textContent = "\n[Error] " + err.toString() + "\n";
+        salidaConsola.appendChild(errorSpan);
+        salidaConsola.scrollTop = salidaConsola.scrollHeight;
+      });
     }
   </script>
 </body>
-</html>  
+</html>

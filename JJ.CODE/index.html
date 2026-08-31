@@ -1656,7 +1656,6 @@ let esCarpeta = carpetasCreadas.includes(folderName) || Object.keys(sistemaArchi
 if (clean.includes('init') && esCarpeta) {
 let initPath = folderName + '/init.py';
 if (sistemaArchivos[initPath] !== undefined) return sistemaArchivos[initPath];
-// Importante: Si Skulpt pide .js para init, NO devolver '#' de Python
 if (x.endsWith('.js')) {
 return "var $builtinmodule = function() { return {name: new Sk.builtin.str('" + folderName + "')}; };";
 }

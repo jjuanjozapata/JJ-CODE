@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
   
-  <!-- Scripts CodeMirror y Motor de Búsqueda -->
+  <!-- Scripts CodeMirror -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
@@ -79,7 +79,6 @@
     }
     .icon-btn:active { color: #FF5198; }
 
-    /* Barra de búsqueda interactiva */
     .search-pill {
       background-color: #1A2B34;
       border-radius: 20px;
@@ -134,23 +133,48 @@
     }
     .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
 
+    /* Barra de pestañas múltiples estilo VS Code */
     .tab-bar {
       flex-shrink: 0;
       background-color: #111B21;
       display: flex;
+      overflow-x: auto;
       border-bottom: 1px solid #1A2B34;
+      -webkit-overflow-scrolling: touch;
     }
+    .tab-bar::-webkit-scrollbar { display: none; }
 
     .tab {
-      background-color: #1A2B34;
-      color: #3CA9E2;
-      padding: 8px 16px;
+      background-color: #16242D;
+      color: #8198a5;
+      padding: 8px 14px;
       font-family: monospace;
-      font-size: 13px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
+      border-right: 1px solid #111B21;
+      border-top: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .tab.activa {
+      background-color: #1A2B34;
+      color: #3CA9E2;
       border-top: 2px solid #FF5198;
+    }
+
+    .tab .btn-cerrar-tab {
+      font-size: 11px;
+      color: #5C7482;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .tab .btn-cerrar-tab:hover {
+      color: #FF5198;
+      background-color: rgba(255, 81, 152, 0.1);
     }
 
     .editor-container {
@@ -168,13 +192,9 @@
       font-size: 14px;
     }
 
-    /* Resaltado de coincidencias encontradas */
     .cm-searching {
       background-color: rgba(255, 81, 152, 0.35) !important;
       border-bottom: 2px solid #FF5198;
-    }
-    .CodeMirror-selectedtext {
-      background-color: rgba(60, 169, 226, 0.45) !important;
     }
 
     /* Prettier Theme */
@@ -340,6 +360,8 @@
       margin: 3px 0;
       background: #16242D;
     }
+    .tree-file:active { background-color: #233642; }
+
     .tree-file.activo {
       background-color: #1A2B34;
       color: #3CA9E2;
@@ -358,7 +380,7 @@
     }
     .btn-delete-file:active { color: #ef4444; }
 
-    /* Modal Diagnóstico */
+    /* Modales */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -387,13 +409,29 @@
       display: flex;
       justify-content: space-between;
     }
-    .modal-info {
-      font-size: 13px;
-      line-height: 1.6;
-      color: #9ba1b0;
-      margin-bottom: 16px;
+    .modal-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
     }
-    .modal-info strong { color: #E0E2E4; }
+    .modal-input-group label {
+      font-size: 12px;
+      color: #8198a5;
+    }
+    .modal-input-group input, .modal-input-group select {
+      background: #111B21;
+      border: 1px solid #233642;
+      color: #E0E2E4;
+      padding: 8px 10px;
+      border-radius: 6px;
+      outline: none;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .modal-input-group input:focus, .modal-input-group select:focus {
+      border-color: #FF5198;
+    }
     .modal-btn {
       width: 100%;
       background: #FF5198;
@@ -403,6 +441,7 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -416,31 +455,47 @@
       <span id="btnCerrarSidebar" style="cursor: pointer; font-size: 16px; padding: 4px;">✕</span>
     </div>
     <div class="sidebar-actions">
-      <button class="sidebar-btn" id="btnCrearArchivo">📄 + Archivo</button>
+      <button class="sidebar-btn" id="btnAbrirModalArchivo">📄 + Archivo</button>
       <button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
     </div>
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
 
+  <!-- Modal Crear Archivo -->
+  <div class="modal-overlay" id="modalCrearArchivo">
+    <div class="modal-box">
+      <h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+      <div class="modal-input-group">
+        <label>Nombre del archivo:</label>
+        <input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py" autocomplete="off">
+      </div>
+      <div class="modal-input-group">
+        <label>Guardar en la carpeta:</label>
+        <select id="selectorCarpetaDestino">
+          <option value="">/ (Raíz)</option>
+        </select>
+      </div>
+      <button class="modal-btn" id="btnConfirmarCrearArchivo">Crear y Abrir</button>
+    </div>
+  </div>
+
   <!-- Modal Listo / Diagnóstico -->
   <div class="modal-overlay" id="modalListo">
     <div class="modal-box">
       <h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <div class="modal-info" id="infoDiagnostico"></div>
+      <div class="modal-info" id="infoDiagnostico" style="font-size:13px; line-height:1.6; color:#9ba1b0; margin-bottom:14px;"></div>
       <button class="modal-btn" id="btnReiniciarMotor">🔄 Reiniciar Motor y Variables</button>
     </div>
   </div>
 
   <div class="app-wrapper">
-    <!-- Barra Superior -->
     <header class="top-toolbar">
       <button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
       <button class="icon-btn" id="btnRamas">🔀</button>
       
-      <!-- Buscador -->
       <div class="search-pill">
         <span>🔍</span>
-        <input type="text" id="buscadorInput" placeholder="Buscar en archivo..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <input type="text" id="buscadorInput" placeholder="Buscar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         <span class="search-badge" id="badgeCoincidencias">0/0</span>
       </div>
 
@@ -450,9 +505,8 @@
       <button class="icon-btn" id="btnOpciones">•••</button>
     </header>
 
-    <div class="tab-bar">
-      <div class="tab" id="pestanaArchivo">&lt;/&gt; prueba.py</div>
-    </div>
+    <!-- Contenedor dinámico de pestañas múltiples -->
+    <div class="tab-bar" id="contenedorPestanas"></div>
 
     <div class="editor-container">
       <textarea id="codigo"></textarea>
@@ -485,19 +539,20 @@
 
     // Persistencia Local
     let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
-      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, bienvenido.')\n\n# Prueba buscando palabras o numeros\nedad = 25\nprint(f'Tu edad es: {edad}')"
+      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, bienvenido.')",
+      "ayuda.py": "# Archivo secundario para practicar con pestañas\ndef sumar(a, b):\n    return a + b\n\nprint('Total:', sumar(10, 5))"
     };
-    let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || [];
-    let archivoActual = localStorage.getItem('py_archivo_activo') || 'prueba.py';
+    let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
+    let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "ayuda.py"];
+    let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
 
-    if (!sistemaArchivos[archivoActual]) {
-      archivoActual = Object.keys(sistemaArchivos)[0] || 'prueba.py';
-      if (!sistemaArchivos[archivoActual]) sistemaArchivos['prueba.py'] = '# Archivo inicial';
-    }
+    // Validar integridad
+    if (!sistemaArchivos[archivoActual]) archivoActual = Object.keys(sistemaArchivos)[0] || "prueba.py";
+    pestanasAbiertas = pestanasAbiertas.filter(p => sistemaArchivos[p]);
+    if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
 
     const salidaConsola = document.getElementById("salidaConsola");
     
-    // Inicializar Editor
     const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python", 
       theme: "prettier", 
@@ -508,12 +563,13 @@
       extraKeys: {"Ctrl-Space": "autocomplete"}
     });
 
-    editor.setValue(sistemaArchivos[archivoActual]);
-    document.getElementById('pestanaArchivo').textContent = `</> ${archivoActual}`;
+    editor.setValue(sistemaArchivos[archivoActual] || "");
 
     editor.on("change", () => {
-      sistemaArchivos[archivoActual] = editor.getValue();
-      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+      if (archivoActual) {
+        sistemaArchivos[archivoActual] = editor.getValue();
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+      }
       if (document.getElementById('buscadorInput').value.trim() !== '') {
         actualizarBusqueda(false);
       }
@@ -527,6 +583,97 @@
       const pos = editor.getCursor();
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
+
+    // --- GESTIÓN DE PESTAÑAS MÚLTIPLES ---
+    function renderizarPestanas() {
+      const contenedor = document.getElementById('contenedorPestanas');
+      contenedor.innerHTML = '';
+
+      pestanasAbiertas.forEach(ruta => {
+        const esActiva = ruta === archivoActual;
+        const div = document.createElement('div');
+        div.className = `tab ${esActiva ? 'activa' : ''}`;
+        
+        div.innerHTML = `
+          <span>&lt;/&gt; ${ruta}</span>
+          <span class="btn-cerrar-tab">✕</span>
+        `;
+
+        div.querySelector('span:first-child').addEventListener('click', () => cambiarPestana(ruta));
+        div.querySelector('.btn-cerrar-tab').addEventListener('click', (e) => {
+          e.stopPropagation();
+          cerrarPestana(ruta);
+        });
+
+        contenedor.appendChild(div);
+      });
+
+      localStorage.setItem('py_pestanas', JSON.stringify(pestanasAbiertas));
+    }
+
+    function cambiarPestana(ruta) {
+      if (!sistemaArchivos[ruta]) return;
+      archivoActual = ruta;
+      localStorage.setItem('py_archivo_activo', ruta);
+      editor.setValue(sistemaArchivos[ruta]);
+      renderizarPestanas();
+      limpiarMarcadores();
+    }
+
+    function abrirEnPestana(ruta) {
+      if (!pestanasAbiertas.includes(ruta)) {
+        pestanasAbiertas.push(ruta);
+      }
+      cambiarPestana(ruta);
+    }
+
+    function cerrarPestana(ruta) {
+      pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
+      if (pestanasAbiertas.length === 0) {
+        const primera = Object.keys(sistemaArchivos)[0];
+        pestanasAbiertas.push(primera);
+      }
+      if (archivoActual === ruta) {
+        cambiarPestana(pestanasAbiertas[pestanasAbiertas.length - 1]);
+      } else {
+        renderizarPestanas();
+      }
+    }
+
+    // --- CREACIÓN DE ARCHIVOS CON SELECCIÓN DE CARPETA ---
+    function abrirModalCrearArchivo() {
+      const selector = document.getElementById('selectorCarpetaDestino');
+      selector.innerHTML = '<option value="">/ (Raíz)</option>';
+      
+      carpetasCreadas.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `📁 ${c}`;
+        selector.appendChild(opt);
+      });
+
+      document.getElementById('nuevoNombreArchivo').value = '';
+      document.getElementById('modalCrearArchivo').classList.add('activo');
+      toggleSidebar();
+    }
+
+    function confirmarCrearArchivo() {
+      let nombre = document.getElementById('nuevoNombreArchivo').value.trim();
+      const carpeta = document.getElementById('selectorCarpetaDestino').value;
+
+      if (!nombre) return alert("Escribe un nombre para el archivo.");
+      if (!nombre.endsWith('.py')) nombre += '.py';
+
+      const rutaCompleta = carpeta ? `${carpeta}/${nombre}` : nombre;
+
+      if (sistemaArchivos[rutaCompleta]) return alert("Ya existe un archivo con ese nombre en esa ubicación.");
+
+      sistemaArchivos[rutaCompleta] = "# Nuevo script Python\n";
+      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+      
+      document.getElementById('modalCrearArchivo').classList.remove('activo');
+      abrirEnPestana(rutaCompleta);
+    }
 
     // --- MOTOR DE BÚSQUEDA ---
     const buscadorInput = document.getElementById('buscadorInput');
@@ -552,7 +699,6 @@
         return;
       }
 
-      // Si cambió el texto buscado, recalcular todas las coincidencias
       if (query !== queryPrevio) {
         limpiarMarcadores();
         queryPrevio = query;
@@ -571,7 +717,6 @@
       if (coincidencias.length > 0) {
         badgeCoincidencias.style.display = 'inline-block';
         badgeCoincidencias.textContent = `[${indiceActual + 1}/${coincidencias.length}]`;
-
         const match = coincidencias[indiceActual];
         editor.setSelection(match.from, match.to);
         editor.scrollIntoView({from: match.from, to: match.to}, 100);
@@ -588,11 +733,8 @@
       }
     });
 
-    buscadorInput.addEventListener('input', () => {
-      actualizarBusqueda(false);
-    });
+    buscadorInput.addEventListener('input', () => actualizarBusqueda(false));
 
-    // Asignador táctil y de clics seguro
     function bindAccion(id, fn) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -630,7 +772,10 @@
           <span class="btn-delete-file">🗑</span>
         `;
 
-        item.querySelector('span:first-child').addEventListener('click', () => abrirArchivo(ruta));
+        item.querySelector('span:first-child').addEventListener('click', () => {
+          abrirEnPestana(ruta);
+          toggleSidebar();
+        });
         item.querySelector('.btn-delete-file').addEventListener('click', (e) => {
           e.stopPropagation();
           eliminarArchivo(ruta);
@@ -639,29 +784,8 @@
       }
     }
 
-    function abrirArchivo(ruta) {
-      archivoActual = ruta;
-      localStorage.setItem('py_archivo_activo', ruta);
-      editor.setValue(sistemaArchivos[ruta]);
-      document.getElementById('pestanaArchivo').textContent = `</> ${ruta}`;
-      limpiarMarcadores();
-      buscadorInput.value = "";
-      toggleSidebar();
-    }
-
-    function crearArchivoPrompt() {
-      let nombre = prompt("Nombre del archivo (ej: datos.py o modulo/datos.py):");
-      if (!nombre) return;
-      if (!nombre.endsWith('.py')) nombre += '.py';
-      if (sistemaArchivos[nombre]) return alert("Ya existe un archivo con ese nombre.");
-
-      sistemaArchivos[nombre] = "# Nuevo script\n";
-      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-      abrirArchivo(nombre);
-    }
-
     function crearCarpetaPrompt() {
-      const nombre = prompt("Nombre de la carpeta:");
+      const nombre = prompt("Nombre de la nueva carpeta:");
       if (!nombre) return;
       if (!carpetasCreadas.includes(nombre)) {
         carpetasCreadas.push(nombre);
@@ -675,36 +799,25 @@
       if (confirm(`¿Eliminar ${ruta}?`)) {
         delete sistemaArchivos[ruta];
         localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        if (archivoActual === ruta) {
-          abrirArchivo(Object.keys(sistemaArchivos)[0]);
-        } else {
-          renderizarArchivos();
-        }
+        cerrarPestana(ruta);
+        renderizarArchivos();
       }
     }
 
-    // Modal de Diagnóstico y Estado
     function abrirModalDiagnostico() {
       const modal = document.getElementById('modalListo');
       const info = document.getElementById('infoDiagnostico');
-      const totalArchivos = Object.keys(sistemaArchivos).length;
-      const lineas = editor.lineCount();
-
       info.innerHTML = `
         • <strong>Motor:</strong> Skulpt (Python 3.x Navegador)<br>
         • <strong>Archivo en uso:</strong> ${archivoActual}<br>
-        • <strong>Líneas:</strong> ${lineas}<br>
-        • <strong>Archivos en memoria:</strong> ${totalArchivos}<br>
+        • <strong>Pestañas abiertas:</strong> ${pestanasAbiertas.length}<br>
+        • <strong>Archivos totales:</strong> ${Object.keys(sistemaArchivos).length}<br>
         • <strong>Modo offline:</strong> ${navigator.onLine ? 'Conectado (PWA Lista)' : 'Activo (Sin conexión)'}
       `;
       modal.classList.add('activo');
     }
 
-    function cerrarModalDiagnostico() {
-      document.getElementById('modalListo').classList.remove('activo');
-    }
-
-    // Terminal y Ejecución
+    // Terminal
     function toggleConsola() {
       const seccion = document.getElementById('seccionConsola');
       const flecha = document.getElementById('flechaConsola');
@@ -767,22 +880,27 @@
         });
     }
 
-    // Vincular Eventos
+    // Asignaciones de eventos
     bindAccion('btnCarpeta', toggleSidebar);
     bindAccion('btnCerrarSidebar', toggleSidebar);
     bindAccion('overlay', toggleSidebar);
-    bindAccion('btnCrearArchivo', crearArchivoPrompt);
+    bindAccion('btnAbrirModalArchivo', abrirModalCrearArchivo);
+    bindAccion('btnCerrarModalArchivo', () => document.getElementById('modalCrearArchivo').classList.remove('activo'));
+    bindAccion('btnConfirmarCrearArchivo', confirmarCrearArchivo);
     bindAccion('btnCrearCarpeta', crearCarpetaPrompt);
     bindAccion('btnEjecutar', ejecutarCodigo);
     bindAccion('flechaConsola', toggleConsola);
     bindAccion('btnLimpiarConsola', () => salidaConsola.innerHTML = "");
     bindAccion('estadoMotor', abrirModalDiagnostico);
     bindAccion('estadoInferior', abrirModalDiagnostico);
-    bindAccion('btnCerrarModal', cerrarModalDiagnostico);
+    bindAccion('btnCerrarModal', () => document.getElementById('modalListo').classList.remove('activo'));
     bindAccion('btnReiniciarMotor', () => {
       salidaConsola.innerHTML = "Motor Python reiniciado.\n";
-      cerrarModalDiagnostico();
+      document.getElementById('modalListo').classList.remove('activo');
     });
+
+    // Iniciar pestañas
+    renderizarPestanas();
   </script>
 </body>
 </html>

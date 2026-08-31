@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="icono.png">
   <link rel="manifest" href="manifest.json">
   
-  <!-- CodeMirror: Editor y utilidades -->
+  <!-- CodeMirror -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
   
@@ -31,7 +31,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Fijar la ventana completa contra rebotes en iPhone */
     html, body {
       position: fixed;
       width: 100vw;
@@ -50,6 +49,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      position: relative;
     }
 
     /* Barra superior fija */
@@ -61,6 +61,7 @@
       padding: 10px 14px;
       gap: 12px;
       border-bottom: 1px solid #1A2B34;
+      z-index: 10;
     }
 
     .icon-btn {
@@ -111,7 +112,7 @@
       background-color: #E03E7E;
     }
 
-    /* Pestaña fija */
+    /* Pestaña de archivo activa */
     .tab-bar {
       flex-shrink: 0;
       background-color: #111B21;
@@ -131,7 +132,7 @@
       border-top: 2px solid #FF5198;
     }
 
-    /* Contenedor del editor de código */
+    /* Editor */
     .editor-container {
       flex: 1;
       position: relative;
@@ -147,7 +148,7 @@
       font-size: 14px;
     }
 
-    /* Estilos Tema Prettier */
+    /* Tema Prettier */
     .cm-s-prettier.CodeMirror { background: #1A2B34; color: #E0E2E4; }
     .cm-s-prettier .CodeMirror-gutters { background: #1A2B34; border-right: 1px solid #233642; }
     .cm-s-prettier .CodeMirror-linenumber { color: #5C7482; }
@@ -162,7 +163,7 @@
     .cm-s-prettier span.cm-operator { color: #FF5198; }
     .cm-s-prettier span.cm-builtin { color: #3CA9E2; }
 
-    /* Sección de Consola / Terminal */
+    /* Terminal */
     .console-section {
       flex-shrink: 0;
       height: 48%;
@@ -171,12 +172,10 @@
       display: flex;
       flex-direction: column;
       transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 5;
     }
 
-    /* Estado oculto: solo muestra la barrita de control */
-    .console-section.oculta {
-      height: 38px;
-    }
+    .console-section.oculta { height: 38px; }
 
     .console-header {
       flex-shrink: 0;
@@ -227,18 +226,136 @@
       width: 140px;
       margin-left: 2px;
     }
+
+    /* --- PANEL LATERAL DE ARCHIVOS Y CARPETAS --- */
+    .sidebar-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 20;
+      display: none;
+    }
+    .sidebar-overlay.activo { display: block; }
+
+    .sidebar {
+      position: absolute;
+      top: 0; left: -280px; width: 280px; height: 100%;
+      background-color: #111B21;
+      border-right: 1px solid #1A2B34;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      transition: left 0.25s ease;
+    }
+    .sidebar.abierto { left: 0; }
+
+    .sidebar-header {
+      padding: 14px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #8198a5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1A2B34;
+    }
+
+    .sidebar-actions {
+      display: flex;
+      gap: 6px;
+      padding: 10px 14px;
+      background-color: #16242D;
+      border-bottom: 1px solid #1A2B34;
+    }
+
+    .sidebar-btn {
+      flex: 1;
+      background: #1A2B34;
+      color: #E0E2E4;
+      border: 1px solid #233642;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .sidebar-btn:active { background: #28C0A9; color: #111B21; }
+
+    .file-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .tree-folder {
+      font-size: 13px;
+      color: #FF5198;
+      font-weight: bold;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tree-file {
+      font-size: 13px;
+      color: #E0E2E4;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+
+    .tree-file.activo {
+      background-color: #16242D;
+      color: #3CA9E2;
+      border-left: 3px solid #FF5198;
+    }
+
+    .tree-file-sub {
+      margin-left: 18px;
+    }
+
+    .btn-delete-file {
+      color: #5C7482;
+      font-size: 11px;
+      padding: 2px 6px;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Overlay para cerrar el menú tocando fuera -->
+  <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Menú lateral tipo explorador -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>EXPLORADOR</span>
+      <span style="cursor: pointer;" onclick="toggleSidebar()">✕</span>
+    </div>
+    <div class="sidebar-actions">
+      <button class="sidebar-btn" onclick="crearArchivoPrompt()">📄 + Archivo</button>
+      <button class="sidebar-btn" onclick="crearCarpetaPrompt()">📁 + Carpeta</button>
+    </div>
+    <div class="file-tree" id="listaArchivos"></div>
+  </aside>
+
   <div class="app-wrapper">
     <!-- Barra superior fija -->
     <header class="top-toolbar">
-      <button class="icon-btn">📁</button>
+      <button class="icon-btn" onclick="toggleSidebar()" title="Ver Archivos">📁</button>
       <button class="icon-btn">🔀</button>
       <div class="search-pill">
         <span>🔍</span>
-        <input type="text" value="prueba.py">
+        <input type="text" id="nombreEnBuscador" value="prueba.py">
       </div>
       <button class="btn-ejecutar-play" onclick="ejecutarCodigo()" title="Ejecutar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -248,16 +365,15 @@
 
     <!-- Pestaña de archivo -->
     <div class="tab-bar">
-      <div class="tab"><span>&lt;/&gt; prueba.py</span></div>
+      <div class="tab" id="pestanaArchivo">&lt;/&gt; prueba.py</div>
     </div>
 
-    <!-- Área del Editor (fija arriba) -->
+    <!-- Área del Editor -->
     <div class="editor-container">
-      <textarea id="codigo">nombre = input('Ingresa tu nombre: ')
-print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
+      <textarea id="codigo"></textarea>
     </div>
 
-    <!-- Terminal con botón de ocultar/mostrar -->
+    <!-- Terminal -->
     <section class="console-section" id="seccionConsola">
       <div class="console-header">
         <span style="font-weight: bold; color: #8198a5;">🖥 Consola</span>
@@ -281,17 +397,39 @@ print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
       navigator.serviceWorker.register('./sw.js').then(() => console.log('¡Modo offline listo!'));
     }
 
+    // --- SISTEMA DE ARCHIVOS CON LOCALSTORAGE ---
+    let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
+      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, tus archivos se guardan automáticamente.')"
+    };
+
+    let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || [];
+    let archivoActual = localStorage.getItem('py_archivo_activo') || 'prueba.py';
+
+    if (!sistemaArchivos[archivoActual]) {
+      archivoActual = Object.keys(sistemaArchivos)[0] || 'prueba.py';
+      if (!sistemaArchivos[archivoActual]) sistemaArchivos['prueba.py'] = '# Empieza a escribir';
+    }
+
     const salidaConsola = document.getElementById("salidaConsola");
     
-    // Editor CodeMirror optimizado para móvil
     const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python", 
       theme: "prettier", 
       lineNumbers: true, 
       lineWrapping: true, 
       autoCloseBrackets: true,
-      inputStyle: "contenteditable", // Mejora notablemente la precisión táctil en Safari iOS
+      inputStyle: "contenteditable",
       extraKeys: {"Ctrl-Space": "autocomplete"}
+    });
+
+    // Cargar contenido inicial
+    editor.setValue(sistemaArchivos[archivoActual]);
+    actualizarVistasEncabezado();
+
+    // Guardado automático en el almacenamiento local mientras escribes
+    editor.on("change", () => {
+      sistemaArchivos[archivoActual] = editor.getValue();
+      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
     });
 
     editor.on("inputRead", function(cm, change) {
@@ -303,6 +441,101 @@ print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
+    // --- FUNCIONES DEL EXPLORADOR ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const estaAbierto = sidebar.classList.toggle('abierto');
+      overlay.classList.toggle('activo', estaAbierto);
+      if (estaAbierto) renderizarArchivos();
+    }
+
+    function renderizarArchivos() {
+      const contenedor = document.getElementById('listaArchivos');
+      contenedor.innerHTML = '';
+
+      // Mostrar carpetas registradas
+      carpetasCreadas.forEach(carpeta => {
+        const itemCarpeta = document.createElement('div');
+        itemCarpeta.className = 'tree-folder';
+        itemCarpeta.innerHTML = `📁 ${carpeta}`;
+        contenedor.appendChild(itemCarpeta);
+      });
+
+      // Mostrar archivos
+      for (const ruta in sistemaArchivos) {
+        const item = document.createElement('div');
+        const esSub = ruta.includes('/');
+        item.className = `tree-file ${esSub ? 'tree-file-sub' : ''} ${ruta === archivoActual ? 'activo' : ''}`;
+        
+        item.innerHTML = `
+          <span onclick="abrirArchivo('${ruta}')" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            📄 ${ruta}
+          </span>
+          <span class="btn-delete-file" onclick="eliminarArchivo('${ruta}')">🗑</span>
+        `;
+        contenedor.appendChild(item);
+      }
+    }
+
+    function abrirArchivo(ruta) {
+      archivoActual = ruta;
+      localStorage.setItem('py_archivo_activo', ruta);
+      editor.setValue(sistemaArchivos[ruta]);
+      actualizarVistasEncabezado();
+      toggleSidebar();
+    }
+
+    function actualizarVistasEncabezado() {
+      document.getElementById('pestanaArchivo').textContent = `</> ${archivoActual}`;
+      document.getElementById('nombreEnBuscador').value = archivoActual;
+    }
+
+    function crearArchivoPrompt() {
+      let nombre = prompt("Nombre del archivo (ej: script.py o carpeta/script.py):");
+      if (!nombre) return;
+      if (!nombre.endsWith('.py')) nombre += '.py';
+
+      if (sistemaArchivos[nombre]) {
+        alert("Ya existe un archivo con ese nombre.");
+        return;
+      }
+
+      sistemaArchivos[nombre] = "# Nuevo script Python\n";
+      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+      abrirArchivo(nombre);
+    }
+
+    function crearCarpetaPrompt() {
+      const nombre = prompt("Nombre de la nueva carpeta:");
+      if (!nombre) return;
+      if (!carpetasCreadas.includes(nombre)) {
+        carpetasCreadas.push(nombre);
+        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+        renderizarArchivos();
+      }
+    }
+
+    function eliminarArchivo(ruta) {
+      const total = Object.keys(sistemaArchivos).length;
+      if (total <= 1) {
+        alert("Debes tener al menos un archivo.");
+        return;
+      }
+
+      if (confirm(`¿Seguro que deseas eliminar ${ruta}?`)) {
+        delete sistemaArchivos[ruta];
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+        if (archivoActual === ruta) {
+          archivoActual = Object.keys(sistemaArchivos)[0];
+          abrirArchivo(archivoActual);
+        } else {
+          renderizarArchivos();
+        }
+      }
+    }
+
+    // --- TERMINAL Y EJECUCIÓN ---
     function enfocarInput() {
       const inputTerminal = document.querySelector('.terminal-input');
       if (inputTerminal) inputTerminal.focus();
@@ -312,11 +545,7 @@ print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
       const seccion = document.getElementById('seccionConsola');
       const flecha = document.getElementById('flechaConsola');
       seccion.classList.toggle('oculta');
-      
-      const estaOculta = seccion.classList.contains('oculta');
-      flecha.textContent = estaOculta ? '🔼' : '🔽';
-      
-      // Reajusta el tamaño del editor sin tirones
+      flecha.textContent = seccion.classList.contains('oculta') ? '🔼' : '🔽';
       setTimeout(() => editor.refresh(), 260);
     }
 
@@ -335,7 +564,6 @@ print(f"Hola {nombre}, el editor ya no se mueve.")</textarea>
       const seccion = document.getElementById('seccionConsola');
       const flecha = document.getElementById('flechaConsola');
       
-      // Si está oculta, abrirla automáticamente al ejecutar
       if (seccion.classList.contains('oculta')) {
         seccion.classList.remove('oculta');
         flecha.textContent = '🔽';

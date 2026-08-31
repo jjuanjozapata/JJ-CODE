@@ -560,6 +560,8 @@ def restar(a, b):
   estadoEjecucion.textContent = "Ejecutando...";
 
   Sk.pre = "salidaConsola";
+  
+  // 1. Configurar entrada y salida sin límite de tiempo
   Sk.configure({
     output: function(texto) {
       salidaConsola.textContent += texto;
@@ -570,10 +572,36 @@ def restar(a, b):
       return window.prompt(promptText || "Introduce un valor:");
     },
     inputfunTakesPrompt: true,
-    execLimit: null, // Desactiva el límite de tiempo durante inputs
+    execLimit: Number.POSITIVE_INFINITY, // Deshabilita el límite de tiempo
     __future__: Sk.python3
   });
 
+  Sk.execLimit = Number.POSITIVE_INFINITY;
+
+  // 2. Ejecución con yieldHandler para resetear el timeout en suspensiones
+  const codigo = editor.getValue();
+  const promise = Sk.misceval.asyncToPromise(
+    function() {
+      return Sk.importMainWithBody("<stdin>", false, codigo, true);
+    },
+    {
+      "*": function() {
+        // Resetea el reloj interno de Skulpt en cada suspensión/input
+        return null;
+      }
+    }
+  );
+
+  promise.then(function() {
+    estadoEjecucion.textContent = "Python Listo";
+  }).catch(function(err) {
+    estadoEjecucion.textContent = "Error";
+    const msg = document.createElement("span");
+    msg.className = "console-error";
+    msg.textContent = "\n[Error] " + err.toString();
+    salidaConsola.appendChild(msg);
+  });
+}
   // Asegurar que el objeto de ejecución no tenga timeout
   Sk.execLimit = null;
 

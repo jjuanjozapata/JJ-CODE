@@ -133,11 +133,12 @@
     }
     .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
 
-    /* Barra de pestañas múltiples estilo VS Code */
+    /* Barra de pestañas múltiples con botón '+' */
     .tab-bar {
       flex-shrink: 0;
       background-color: #111B21;
       display: flex;
+      align-items: center;
       overflow-x: auto;
       border-bottom: 1px solid #1A2B34;
       -webkit-overflow-scrolling: touch;
@@ -176,6 +177,20 @@
       color: #FF5198;
       background-color: rgba(255, 81, 152, 0.1);
     }
+
+    .btn-nueva-pestana {
+      background: none;
+      border: none;
+      color: #3CA9E2;
+      font-size: 16px;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .btn-nueva-pestana:active { color: #FF5198; }
 
     .editor-container {
       flex: 1;
@@ -432,17 +447,31 @@
     .modal-input-group input:focus, .modal-input-group select:focus {
       border-color: #FF5198;
     }
+
+    .modal-btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
     .modal-btn {
-      width: 100%;
+      flex: 1;
       background: #FF5198;
       border: none;
       color: white;
       padding: 10px;
       border-radius: 8px;
       font-weight: bold;
+      font-size: 13px;
       cursor: pointer;
-      margin-top: 6px;
+      text-align: center;
     }
+    .modal-btn.secondary {
+      background: #1A2B34;
+      border: 1px solid #233642;
+      color: #3CA9E2;
+    }
+    .modal-btn:active { opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -461,7 +490,7 @@
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
 
-  <!-- Modal Crear Archivo -->
+  <!-- Modal Crear Archivo (Opciones Crear / Abrir separadas) -->
   <div class="modal-overlay" id="modalCrearArchivo">
     <div class="modal-box">
       <h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
@@ -470,12 +499,34 @@
         <input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py" autocomplete="off">
       </div>
       <div class="modal-input-group">
-        <label>Guardar en la carpeta:</label>
+        <label>Guardar en carpeta:</label>
         <select id="selectorCarpetaDestino">
           <option value="">/ (Raíz)</option>
         </select>
       </div>
-      <button class="modal-btn" id="btnConfirmarCrearArchivo">Crear y Abrir</button>
+      <div class="modal-btn-group">
+        <button class="modal-btn secondary" id="btnSoloCrear">Crear</button>
+        <button class="modal-btn" id="btnCrearYAbrir">Abrir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Abrir Pestaña (+) -->
+  <div class="modal-overlay" id="modalAbrirPestana">
+    <div class="modal-box">
+      <h3>Abrir Archivo en Pestaña <span id="btnCerrarModalPestana" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+      <div class="modal-input-group">
+        <label>Selecciona la carpeta:</label>
+        <select id="selectorCarpetaPestana">
+          <option value="TODAS">📁 Todas las ubicaciones</option>
+          <option value="">/ (Raíz)</option>
+        </select>
+      </div>
+      <div class="modal-input-group">
+        <label>Selecciona el archivo:</label>
+        <select id="selectorArchivoPestana"></select>
+      </div>
+      <button class="modal-btn" id="btnConfirmarAbrirPestana">Abrir</button>
     </div>
   </div>
 
@@ -484,7 +535,7 @@
     <div class="modal-box">
       <h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
       <div class="modal-info" id="infoDiagnostico" style="font-size:13px; line-height:1.6; color:#9ba1b0; margin-bottom:14px;"></div>
-      <button class="modal-btn" id="btnReiniciarMotor">🔄 Reiniciar Motor y Variables</button>
+      <button class="modal-btn" id="btnReiniciarMotor" style="width:100%;">🔄 Reiniciar Motor y Variables</button>
     </div>
   </div>
 
@@ -546,7 +597,7 @@
     let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "ayuda.py"];
     let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
 
-    // Validar integridad
+    // Validaciones iniciales
     if (!sistemaArchivos[archivoActual]) archivoActual = Object.keys(sistemaArchivos)[0] || "prueba.py";
     pestanasAbiertas = pestanasAbiertas.filter(p => sistemaArchivos[p]);
     if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
@@ -584,7 +635,7 @@
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
-    // --- GESTIÓN DE PESTAÑAS MÚLTIPLES ---
+    // --- PESTAÑAS MÚLTIPLES ---
     function renderizarPestanas() {
       const contenedor = document.getElementById('contenedorPestanas');
       contenedor.innerHTML = '';
@@ -607,6 +658,14 @@
 
         contenedor.appendChild(div);
       });
+
+      // Botón '+' al final de las pestañas
+      const btnMas = document.createElement('button');
+      btnMas.className = 'btn-nueva-pestana';
+      btnMas.innerHTML = '+';
+      btnMas.title = 'Abrir archivo en pestaña';
+      btnMas.addEventListener('click', abrirModalPestanaNueva);
+      contenedor.appendChild(btnMas);
 
       localStorage.setItem('py_pestanas', JSON.stringify(pestanasAbiertas));
     }
@@ -640,7 +699,65 @@
       }
     }
 
-    // --- CREACIÓN DE ARCHIVOS CON SELECCIÓN DE CARPETA ---
+    // --- MODAL ABRIR PESTAÑA (+) ---
+    function abrirModalPestanaNueva() {
+      const selCarpeta = document.getElementById('selectorCarpetaPestana');
+      selCarpeta.innerHTML = `
+        <option value="TODAS">📁 Todas las ubicaciones</option>
+        <option value="">/ (Raíz)</option>
+      `;
+
+      carpetasCreadas.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `📁 ${c}`;
+        selCarpeta.appendChild(opt);
+      });
+
+      actualizarSelectorArchivosPestana();
+      document.getElementById('modalAbrirPestana').classList.add('activo');
+    }
+
+    function actualizarSelectorArchivosPestana() {
+      const carpeta = document.getElementById('selectorCarpetaPestana').value;
+      const selArchivo = document.getElementById('selectorArchivoPestana');
+      selArchivo.innerHTML = '';
+
+      let archivosDisponibles = Object.keys(sistemaArchivos);
+
+      if (carpeta !== 'TODAS') {
+        if (carpeta === '') {
+          archivosDisponibles = archivosDisponibles.filter(a => !a.includes('/'));
+        } else {
+          archivosDisponibles = archivosDisponibles.filter(a => a.startsWith(carpeta + '/'));
+        }
+      }
+
+      if (archivosDisponibles.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '(Sin archivos en esta carpeta)';
+        selArchivo.appendChild(opt);
+      } else {
+        archivosDisponibles.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a;
+          opt.textContent = `📄 ${a}`;
+          selArchivo.appendChild(opt);
+        });
+      }
+    }
+
+    document.getElementById('selectorCarpetaPestana').addEventListener('change', actualizarSelectorArchivosPestana);
+
+    function confirmarAbrirPestana() {
+      const ruta = document.getElementById('selectorArchivoPestana').value;
+      if (!ruta) return alert("Selecciona un archivo válido.");
+      document.getElementById('modalAbrirPestana').classList.remove('activo');
+      abrirEnPestana(ruta);
+    }
+
+    // --- CREACIÓN DE ARCHIVOS ---
     function abrirModalCrearArchivo() {
       const selector = document.getElementById('selectorCarpetaDestino');
       selector.innerHTML = '<option value="">/ (Raíz)</option>';
@@ -657,7 +774,7 @@
       toggleSidebar();
     }
 
-    function confirmarCrearArchivo() {
+    function procesarCreacionArchivo(abrirAlFinal = false) {
       let nombre = document.getElementById('nuevoNombreArchivo').value.trim();
       const carpeta = document.getElementById('selectorCarpetaDestino').value;
 
@@ -672,10 +789,16 @@
       localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
       
       document.getElementById('modalCrearArchivo').classList.remove('activo');
-      abrirEnPestana(rutaCompleta);
+
+      if (abrirAlFinal) {
+        abrirEnPestana(rutaCompleta);
+      } else {
+        renderizarPestanas();
+        alert(`Archivo "${rutaCompleta}" creado correctamente.`);
+      }
     }
 
-    // --- MOTOR DE BÚSQUEDA ---
+    // --- BUSCADOR ---
     const buscadorInput = document.getElementById('buscadorInput');
     const badgeCoincidencias = document.getElementById('badgeCoincidencias');
     let listaMarcadores = [];
@@ -742,7 +865,7 @@
       el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
     }
 
-    // Control Sidebar
+    // Sidebar
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('overlay');
@@ -880,14 +1003,17 @@
         });
     }
 
-    // Asignaciones de eventos
+    // Eventos
     bindAccion('btnCarpeta', toggleSidebar);
     bindAccion('btnCerrarSidebar', toggleSidebar);
     bindAccion('overlay', toggleSidebar);
     bindAccion('btnAbrirModalArchivo', abrirModalCrearArchivo);
     bindAccion('btnCerrarModalArchivo', () => document.getElementById('modalCrearArchivo').classList.remove('activo'));
-    bindAccion('btnConfirmarCrearArchivo', confirmarCrearArchivo);
+    bindAccion('btnSoloCrear', () => procesarCreacionArchivo(false));
+    bindAccion('btnCrearYAbrir', () => procesarCreacionArchivo(true));
     bindAccion('btnCrearCarpeta', crearCarpetaPrompt);
+    bindAccion('btnCerrarModalPestana', () => document.getElementById('modalAbrirPestana').classList.remove('activo'));
+    bindAccion('btnConfirmarAbrirPestana', confirmarAbrirPestana);
     bindAccion('btnEjecutar', ejecutarCodigo);
     bindAccion('flechaConsola', toggleConsola);
     bindAccion('btnLimpiarConsola', () => salidaConsola.innerHTML = "");
@@ -899,7 +1025,6 @@
       document.getElementById('modalListo').classList.remove('activo');
     });
 
-    // Iniciar pestañas
     renderizarPestanas();
   </script>
 </body>

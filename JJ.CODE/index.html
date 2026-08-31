@@ -126,7 +126,6 @@
       padding: 2px 4px;
     }
 
-    /* Barra de reemplazo expandible */
     .replace-bar {
       display: none;
       background-color: #131E25;
@@ -942,7 +941,7 @@
     if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
 
     const salidaConsola = document.getElementById("salidaConsola");
-    let modoConsolaActual = "salida"; // "salida" o "repl"
+    let modoConsolaActual = "salida";
     let historialRepl = [];
     let indiceHistorialRepl = -1;
 
@@ -1775,7 +1774,7 @@
       info.innerHTML = `
         • <strong>Motor:</strong> Skulpt 1.2 (Timeout 6s)<br>
         • <strong>Módulo iOS:</strong> Habilitado (import ios)<br>
-        • <strong>I/O Virtual:</strong> Habilitado (open/write)<br>
+        • <strong>I/O Virtual:</strong> Habilitado (open/write nativo)<br>
         • <strong>Archivo en uso:</strong> ${archivoActual}<br>
         • <strong>Pestañas:</strong> ${pestanasAbiertas.length}<br>
         • <strong>Archivos totales:</strong> ${Object.keys(sistemaArchivos).length}<br>
@@ -1792,9 +1791,45 @@
       setTimeout(() => editor.refresh(), 260);
     }
 
-    // --- MÓDULO NATIVO SKULPT: 'ios' & VFS ---
+    // --- MÓDULOS NATIVOS SKULPT (ios, open VFS) ---
     function configurarModulosSkulpt() {
-      Sk.execLimit = 6000; // Guardia anti-bucles: 6s máx
+      Sk.execLimit = 6000; // Guardia anti-bucles: 6s
+
+      // Registro nativo de open() en Skulpt sin inyectar código en el archivo del usuario
+      Sk.builtins = Sk.builtins || {};
+      Sk.builtins.open = new Sk.builtin.func(function(filename, mode) {
+        let fn = Sk.ffi.remapToJs(filename);
+        let m = mode ? Sk.ffi.remapToJs(mode) : 'r';
+
+        let vfsObj = {
+          __name__: new Sk.builtin.str("VFSFile"),
+          read: new Sk.builtin.func(function() {
+            let content = sistemaArchivos[fn] !== undefined ? sistemaArchivos[fn] : "";
+            return new Sk.builtin.str(content);
+          }),
+          write: new Sk.builtin.func(function(data) {
+            let strData = Sk.ffi.remapToJs(data);
+            if (m === 'a' && sistemaArchivos[fn]) {
+              sistemaArchivos[fn] += strData;
+            } else {
+              sistemaArchivos[fn] = strData;
+            }
+            localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+            renderizarArchivos();
+            return Sk.builtin.none.none$;
+          }),
+          close: new Sk.builtin.func(function() {
+            return Sk.builtin.none.none$;
+          }),
+          __enter__: new Sk.builtin.func(function() {
+            return this;
+          }),
+          __exit__: new Sk.builtin.func(function() {
+            return Sk.builtin.none.none$;
+          })
+        };
+        return vfsObj;
+      });
 
       Sk.configure({
         output: (t) => {
@@ -1802,7 +1837,7 @@
           salidaConsola.scrollTop = salidaConsola.scrollHeight;
         },
         read: (x) => {
-          // Módulo Puente Hardware iPhone: 'import ios'
+          // Módulo puente Hardware iPhone: 'import ios'
           if (x === "src/lib/ios.js" || x === "./ios.js" || x === "ios.js" || x === "ios") {
             return `
               var $builtinmodule = function (name) {
@@ -1831,7 +1866,6 @@
 
           let clean = x.replace(/^src\/lib\//, '').replace(/^\.\//, '');
 
-          // Búsqueda en sistema de archivos local
           if (sistemaArchivos[clean] !== undefined) return sistemaArchivos[clean];
           if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
 
@@ -1872,50 +1906,7 @@
       });
     }
 
-    // --- PREPARAR ENTORNO VIRTUAL CON OPEN() EMULADO ---
-    function generarCodigoConVFS(codigoOriginal) {
-      window.__vfs_write = function(filename, content, mode) {
-        let fn = String(filename).replace(/^['"]|['"]$/g, '');
-        if (mode === 'a' && sistemaArchivos[fn]) {
-          sistemaArchivos[fn] += String(content);
-        } else {
-          sistemaArchivos[fn] = String(content);
-        }
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        renderizarArchivos();
-      };
-
-      window.__vfs_read = function(filename) {
-        let fn = String(filename).replace(/^['"]|['"]$/g, '');
-        if (sistemaArchivos[fn] !== undefined) return sistemaArchivos[fn];
-        throw new Error("No such file: " + fn);
-      };
-
-      const emulacionOpen = `
-import js
-class _VFSFile:
-    def __init__(self, filename, mode='r'):
-        self.filename = filename
-        self.mode = mode
-        self.content = ''
-        if 'r' in mode:
-            self.content = js.window.__vfs_read(filename)
-    def read(self):
-        return self.content
-    def write(self, data):
-        js.window.__vfs_write(self.filename, str(data), self.mode)
-    def __enter__(self):
-        return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-def open(filename, mode='r'):
-    return _VFSFile(filename, mode)
-\n`;
-      return emulacionOpen + codigoOriginal;
-    }
-
-    // --- EJECUTOR PYTHON CON PROFILER Y CONTROL DE ERRORES ---
+    // --- EJECUTOR PYTHON CON SALTO EXACTO A LÍNEA ---
     function ejecutarCodigo() {
       guardarSnapshot("Pre-run");
 
@@ -1930,10 +1921,9 @@ def open(filename, mode='r'):
       configurarModulosSkulpt();
 
       let codigoPuro = editor.getValue();
-      let codigoConVFS = generarCodigoConVFS(codigoPuro);
       let tInicio = performance.now();
 
-      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigoConVFS, true))
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigoPuro, true))
         .then(() => {
           let tFin = performance.now();
           let benchSpan = document.createElement("span");
@@ -1950,10 +1940,8 @@ def open(filename, mode='r'):
           errContainer.style.color = "#FF5198";
           errContainer.style.marginTop = "4px";
 
-          // Ajuste del número de línea compensando el shim VFS (18 líneas inyectadas)
           if (lineMatch && lineMatch[1]) {
-            let numLineaInyectada = parseInt(lineMatch[1], 10);
-            let numLineaReal = Math.max(1, numLineaInyectada - 18);
+            let numLineaReal = parseInt(lineMatch[1], 10);
             errContainer.innerHTML = `[Error] ${errStr} <br><span class="console-error-tag">👉 Toca para ir a la Línea ${numLineaReal}</span>`;
             errContainer.querySelector('.console-error-tag').onclick = () => {
               editor.focus();
@@ -2020,7 +2008,7 @@ def open(filename, mode='r'):
       }
     });
 
-    // Bindings de Eventos Generales
+    // Bindings de Eventos
     bindAccion('btnCarpeta', toggleSidebar);
     bindAccion('btnCerrarSidebar', toggleSidebar);
     bindAccion('overlay', toggleSidebar);

@@ -11,9 +11,6 @@
   
   <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.css">
   
   <!-- Skulpt 1.2.0 Core & Standard Library -->
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
@@ -22,21 +19,17 @@
   <!-- CodeMirror Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/anyword-hint.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
 
   <style>
     :root {
       --bg-dark: #0f111a;
       --bg-surface: #1a1c23;
-      --bg-toolbar: #24283b;
-      --border-color: #2f354a;
+      --bg-toolbar: #1e222d;
+      --border-color: #2b3040;
       --text-main: #e0e6ed;
       --text-muted: #8a919e;
       --accent-color: #00e676;
-      --accent-hover: #00c853;
       --danger-color: #ff5370;
     }
 
@@ -65,32 +58,26 @@
       overflow: hidden;
     }
 
-    /* Toolbar superior */
     .top-toolbar {
       display: flex;
       align-items: center;
       background: var(--bg-toolbar);
-      padding: 6px 10px;
-      gap: 8px;
+      padding: 6px 12px;
+      gap: 10px;
       border-bottom: 1px solid var(--border-color);
-      height: 46px;
+      height: 48px;
     }
 
-    .icon-btn, .btn-replace-toggle {
+    .icon-btn {
       background: none;
       border: none;
       color: var(--text-main);
-      font-size: 16px;
-      padding: 6px;
+      font-size: 18px;
       cursor: pointer;
-      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .icon-btn:active {
-      background: var(--border-color);
+      padding: 4px;
     }
 
     .search-pill {
@@ -99,7 +86,7 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: 20px;
-      padding: 2px 8px;
+      padding: 3px 10px;
       flex: 1;
       height: 32px;
       gap: 6px;
@@ -114,81 +101,37 @@
       outline: none;
     }
 
-    .search-badge {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
     .btn-ejecutar-play {
       background: var(--accent-color);
       color: #000;
       border: none;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
     }
 
-    /* Barra Reemplazo */
-    .replace-bar {
-      display: none;
-      align-items: center;
-      background: var(--bg-surface);
-      padding: 6px 10px;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .replace-bar.activa {
-      display: flex;
-    }
-
-    .replace-bar input {
-      flex: 1;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 13px;
-      outline: none;
-    }
-
-    .replace-bar button {
-      background: var(--bg-toolbar);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    /* Pestañas */
     .tab-bar {
       display: flex;
       background: var(--bg-dark);
       overflow-x: auto;
       border-bottom: 1px solid var(--border-color);
       scrollbar-width: none;
-      height: 34px;
+      height: 36px;
     }
-
-    .tab-bar::-webkit-scrollbar {
-      display: none;
-    }
+    .tab-bar::-webkit-scrollbar { display: none; }
 
     .tab-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 0 12px;
+      padding: 0 14px;
       background: var(--bg-surface);
       border-right: 1px solid var(--border-color);
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
       cursor: pointer;
       white-space: nowrap;
@@ -202,33 +145,27 @@
 
     .tab-close {
       cursor: pointer;
-      opacity: 0.6;
+      padding: 2px;
     }
 
-    .tab-close:hover {
-      opacity: 1;
-    }
-
-    /* Editor */
     .editor-container {
       flex: 1;
       position: relative;
-      overflow: hidden;
+      background: var(--bg-dark);
     }
 
     .CodeMirror {
       height: 100% !important;
-      font-family: "JetBrains Mono", Menlo, Monaco, Consolas, monospace !important;
+      font-family: Menlo, Monaco, Consolas, monospace !important;
+      font-size: 14px;
       background: #0f111a !important;
       color: #e0e6ed !important;
     }
-
     .CodeMirror-gutters {
       background: #0f111a !important;
       border-right: 1px solid var(--border-color) !important;
     }
 
-    /* Barra de Símbolos y Accesos */
     .symbols-bar {
       display: flex;
       align-items: center;
@@ -236,21 +173,18 @@
       overflow-x: auto;
       border-top: 1px solid var(--border-color);
       padding: 4px 6px;
-      gap: 4px;
+      gap: 5px;
       scrollbar-width: none;
-      height: 40px;
+      height: 42px;
     }
-
-    .symbols-bar::-webkit-scrollbar {
-      display: none;
-    }
+    .symbols-bar::-webkit-scrollbar { display: none; }
 
     .sym-btn {
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 5px 10px;
+      border-radius: 5px;
       font-size: 13px;
       font-family: monospace;
       cursor: pointer;
@@ -262,20 +196,18 @@
       color: #000;
     }
 
-    /* Barra de Estado */
     .status-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: var(--bg-dark);
-      padding: 2px 10px;
+      padding: 2px 12px;
       font-size: 11px;
       color: var(--text-muted);
       border-top: 1px solid var(--border-color);
       height: 22px;
     }
 
-    /* Consola */
     .console-panel {
       height: 35%;
       background: #08090d;
@@ -289,42 +221,33 @@
       justify-content: space-between;
       align-items: center;
       background: var(--bg-surface);
-      padding: 4px 10px;
+      padding: 6px 12px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: bold;
       border-bottom: 1px solid var(--border-color);
     }
 
     .console-body {
       flex: 1;
-      padding: 8px;
+      padding: 10px;
       overflow-y: auto;
-      font-family: monospace;
+      font-family: Menlo, monospace;
       font-size: 12px;
       white-space: pre-wrap;
       word-break: break-all;
       user-select: text;
     }
 
-    .console-output-error {
-      color: var(--danger-color);
-    }
+    .console-error { color: var(--danger-color); }
 
-    /* Sidebar y Overlays */
     .sidebar-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background: rgba(0,0,0,0.6);
       z-index: 900;
       display: none;
     }
-
-    .sidebar-overlay.activo {
-      display: block;
-    }
+    .sidebar-overlay.activo { display: block; }
 
     .sidebar {
       position: fixed;
@@ -339,22 +262,18 @@
       flex-direction: column;
       transition: transform 0.25s ease;
     }
-
-    .sidebar.abierto {
-      transform: translateX(280px);
-    }
+    .sidebar.abierto { transform: translateX(280px); }
 
     .sidebar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
+      padding: 14px;
       border-bottom: 1px solid var(--border-color);
       font-weight: bold;
-      font-size: 14px;
     }
 
-    .sidebar-actions, .sidebar-backup-actions {
+    .sidebar-actions {
       display: flex;
       gap: 6px;
       padding: 8px 12px;
@@ -379,15 +298,11 @@
     }
 
     .file-item {
-      display: flex;
-      align-items: center;
-      padding: 6px 16px;
+      padding: 8px 16px;
       font-size: 13px;
       cursor: pointer;
-      color: var(--text-main);
     }
-
-    .file-item:active, .file-item.activo {
+    .file-item.activo {
       background: var(--border-color);
       color: var(--accent-color);
     }
@@ -395,59 +310,38 @@
 </head>
 <body>
 
-  <input type="file" id="inputSubirArchivos" multiple accept=".py,.json,.txt,.csv" style="display:none;">
-
-  <!-- Overlay y Sidebar -->
   <div class="sidebar-overlay" id="overlay"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>EXPLORADOR PYTHON</span>
-      <span id="btnCerrarSidebar" style="cursor: pointer; font-size: 16px; padding: 4px;">✕</span>
+      <span id="btnCerrarSidebar" style="cursor: pointer;">✕</span>
     </div>
     <div class="sidebar-actions">
       <button class="sidebar-btn" id="btnNuevoScript">🐍 + Script</button>
-      <button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
-    </div>
-    <div class="sidebar-backup-actions">
-      <button class="sidebar-btn" id="btnSubirArchivo" title="Subir archivo">📂 Importar</button>
-      <button class="sidebar-btn" id="btnExportarWorkspace" title="Descargar copia">💾 Backup</button>
     </div>
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
 
   <div class="app-wrapper">
-    <!-- Barra Superior -->
     <header class="top-toolbar">
-      <button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
+      <button class="icon-btn" id="btnCarpeta">📁</button>
       
       <div class="search-pill">
         <span>🔍</span>
-        <input type="text" id="buscadorInput" placeholder="Buscar en código..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        <span class="search-badge" id="badgeCoincidencias">0/0</span>
-        <button class="btn-replace-toggle" id="btnToggleReplace" title="Reemplazar">⇄</button>
+        <input type="text" placeholder="Buscar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </div>
 
-      <button class="btn-ejecutar-play" id="btnEjecutar" title="Ejecutar Script">
+      <button class="btn-ejecutar-play" id="btnEjecutar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </button>
     </header>
 
-    <!-- Barra de Búsqueda y Reemplazo -->
-    <div class="replace-bar" id="barraReemplazo">
-      <input type="text" id="inputReemplazo" placeholder="Reemplazar por..." autocomplete="off">
-      <button id="btnReemplazarUno">Uno</button>
-      <button id="btnReemplazarTodo">Todo</button>
-    </div>
-
-    <!-- Pestañas de Archivos -->
     <div class="tab-bar" id="contenedorPestanas"></div>
 
-    <!-- Contenedor Editor CodeMirror -->
-    <div class="editor-container" id="editorWrap">
+    <div class="editor-container">
       <textarea id="codigo"></textarea>
     </div>
 
-    <!-- Barra de Accesos Rápidos para Móvil -->
     <div class="symbols-bar">
       <button class="sym-btn" data-sym="NAV_LEFT">◀</button>
       <button class="sym-btn" data-sym="NAV_RIGHT">▶</button>
@@ -462,17 +356,13 @@
       <button class="sym-btn" data-sym="def ">def</button>
       <button class="sym-btn" data-sym="return ">return</button>
       <button class="sym-btn" data-sym="print()">print()</button>
-      <button class="sym-btn" data-sym="UNDO">↶</button>
-      <button class="sym-btn" data-sym="REDO">↷</button>
     </div>
 
-    <!-- Barra de Estado Inferior -->
     <div class="status-bar">
       <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
       <span id="estadoEjecucion">Listo</span>
     </div>
 
-    <!-- Consola de Salida -->
     <div class="console-panel">
       <div class="console-header">
         <span>CONSOLA</span>
@@ -483,43 +373,30 @@
   </div>
 
   <script>
-    // Registro de Service Worker para PWA Offline
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
-
-    // Helper robusto para LocalStorage
     function safeParse(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
-        if (raw === null || raw === undefined) return fallback;
-        return JSON.parse(raw);
+        return (raw !== null && raw !== undefined) ? JSON.parse(raw) : fallback;
       } catch (e) {
-        console.warn(`safeParse: error parsing ${key}`, e);
         return fallback;
       }
     }
 
-    // Sistema de Archivos Virtual (VFS)
     let sistemaArchivos = safeParse('py_archivos', {
       "prueba.py": `# Demostración de Hardware iOS y Archivos Virtuales
 import ios
 import modulos.operaciones as op
 
-try:
-    bateria = ios.get_bateria()
-except Exception:
-    bateria = "No disponible"
+# Probar vibración y hardware
+ios.vibrate(60)
+print('Batería:', ios.get_battery())
 
-print('Batería del sistema:', bateria)
-print('Suma desde módulo (2 + 3):', op.sumar(2, 3))
+# Escritura de archivos locales con open()
+with open('datos.txt', 'w') as f:
+    f.write('Guardado desde Python!')
 
-# Prueba del sistema de archivos local
-with open("salida.txt", "w") as f:
-    f.write("Guardado exitoso en el VFS")
-
-with open("salida.txt", "r") as f:
-    print("Lectura de archivo:", f.read())
+print('5 + 3 =', op.sumar(5, 3))
+print('Archivo datos.txt creado con éxito.')
 `,
       "modulos/operaciones.py": `def sumar(a, b):
     return a + b
@@ -531,11 +408,6 @@ def restar(a, b):
 
     let pestanasAbiertas = safeParse('py_pestanas', ["prueba.py", "modulos/operaciones.py"]);
     let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
-    let configuracionEditor = safeParse('py_config', {
-      fontSize: "14px",
-      tabSize: 4,
-      lineWrapping: true
-    });
 
     if (!sistemaArchivos[archivoActual]) archivoActual = Object.keys(sistemaArchivos)[0] || "prueba.py";
     pestanasAbiertas = pestanasAbiertas.filter(p => sistemaArchivos[p]);
@@ -544,57 +416,41 @@ def restar(a, b):
     const salidaConsola = document.getElementById("salidaConsola");
     const estadoEjecucion = document.getElementById("estadoEjecucion");
 
-    // Inicialización de CodeMirror 5
-    const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
+    // Inicializar CodeMirror 5
+    let editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python",
       lineNumbers: true,
-      lineWrapping: configuracionEditor.lineWrapping,
-      tabSize: configuracionEditor.tabSize,
-      indentUnit: configuracionEditor.tabSize,
+      lineWrapping: true,
+      tabSize: 4,
+      indentUnit: 4,
       autoCloseBrackets: true,
       inputStyle: "contenteditable",
-      extraKeys: {
-        "Ctrl-Space": "autocomplete",
-        "Cmd-Enter": () => ejecutarCodigo(),
-        "Ctrl-Enter": () => ejecutarCodigo()
-      }
+      autocorrect: false,
+      autocapitalize: false,
+      spellcheck: false
     });
 
-    editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
     editor.setValue(sistemaArchivos[archivoActual] || "");
 
-    // Sincronización continua de cambios
     editor.on("change", () => {
       if (archivoActual) {
         sistemaArchivos[archivoActual] = editor.getValue();
-        try {
-          localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        } catch (e) {
-          console.warn('Error guardando en localStorage', e);
-        }
-      }
-    });
-
-    editor.on("inputRead", (cm, change) => {
-      if (change.text && change.text[0] && change.text[0].match(/[a-zA-Z_]/)) {
-        cm.showHint({ completeSingle: false });
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
       }
     });
 
     editor.on("cursorActivity", () => {
       const pos = editor.getCursor();
-      const posEl = document.getElementById("posicionCursor");
-      if (posEl) posEl.textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
+      document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
-    // Gestión de Pestañas y Archivos
     function renderizarPestanas() {
       const contenedor = document.getElementById("contenedorPestanas");
       contenedor.innerHTML = "";
       pestanasAbiertas.forEach(archivo => {
         const tab = document.createElement("div");
         tab.className = `tab-item ${archivo === archivoActual ? "activa" : ""}`;
-        tab.innerHTML = `<span>${archivo.split('/').pop()}</span><span class="tab-close" data-file="${archivo}">✕</span>`;
+        tab.innerHTML = `<span>${archivo.split('/').pop()}</span><span class="tab-close">✕</span>`;
         tab.onclick = (e) => {
           if (e.target.classList.contains("tab-close")) {
             cerrarPestana(archivo);
@@ -642,77 +498,58 @@ def restar(a, b):
       renderizarPestanas();
     }
 
-    // Módulo Nativo embebido Skulpt para iOS
-   function builtinRead(x) {
-  // 1. Módulo nativo ios
-  if (x === "ios" || x === "ios.js" || x === "src/lib/ios.js") {
-    return `
-      var $builtinmodule = function(name) {
-        var mod = {};
-        var fnBateria = new Sk.builtin.func(function() {
-          return new Sk.builtin.str("100% (Simulado PWA)");
-        });
-        mod.get_battery = fnBateria;
-        mod.get_bateria = fnBateria;
-        mod.vibrate = new Sk.builtin.func(function(ms) {
-          if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
-          return Sk.builtin.none.none$;
-        });
-        return mod;
-      };
-    `;
-  }
-
-  // 2. Limpiar ruta de entrada
-  let rutaBuscada = x.replace(/^\.\//, "");
-
-  // 3. Coincidencia directa exacta en el VFS
-  if (sistemaArchivos[rutaBuscada] !== undefined) {
-    return sistemaArchivos[rutaBuscada];
-  }
-
-  // 4. Paquetes: simular __init__.py si la carpeta existe en el VFS
-  if (rutaBuscada.endsWith("/__init__.py")) {
-    let carpeta = rutaBuscada.replace("/__init__.py", "");
-    let existeCarpeta = Object.keys(sistemaArchivos).some(k => k.startsWith(carpeta + "/"));
-    if (existeCarpeta) {
-      return sistemaArchivos[rutaBuscada] || "";
-    }
-  }
-
-  // 5. Soporte para importación por puntos (ej: modulos.operaciones)
-  let rutaPuntos = rutaBuscada.replace(/\.py$/, "").replace(/\//g, ".");
-  for (let ruta in sistemaArchivos) {
-    let virtualPuntos = ruta.replace(/\.py$/, "").replace(/\//g, ".");
-    if (virtualPuntos === rutaPuntos || ruta === rutaBuscada) {
-      return sistemaArchivos[ruta];
-    }
-  }
-
-  // 6. Archivos estándar de Skulpt
-  if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
-    return Sk.builtinFiles["files"][x];
-  }
-
-  throw "No se encontró el módulo: '" + x + "'";
-}
-
-      // Soporte para importación de módulos en subcarpetas del VFS
-      let rutaLimpia = x.replace(/\.py$/, "").replace(/\//g, ".");
-      for (let ruta in sistemaArchivos) {
-        let rutaVirtual = ruta.replace(/\.py$/, "").replace(/\//g, ".");
-        if (rutaVirtual === rutaLimpia || ruta === x) {
-          return sistemaArchivos[ruta];
-        }
+    // Resolutor VFS con soporte completo para submódulos y paquetes
+    function builtinRead(x) {
+      // 1. Módulo ios
+      if (x === "ios" || x === "ios.js" || x === "src/lib/ios.js") {
+        return `
+          var $builtinmodule = function(name) {
+            var mod = {};
+            var fnBateria = new Sk.builtin.func(function() {
+              return new Sk.builtin.str("100% (iOS PWA)");
+            });
+            mod.get_battery = fnBateria;
+            mod.get_bateria = fnBateria;
+            mod.vibrate = new Sk.builtin.func(function(ms) {
+              if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
+              return Sk.builtin.none.none$;
+            });
+            return mod;
+          };
+        `;
       }
 
-      if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
-        throw "No se encontró el módulo: '" + x + "'";
+      // Normalizar rutas
+      let limpia = x.replace(/^src\/lib\//, "").replace(/^\.\//, "");
+
+      // 2. Coincidencia directa en el VFS
+      if (sistemaArchivos[limpia] !== undefined) {
+        return sistemaArchivos[limpia];
       }
-      return Sk.builtinFiles["files"][x];
+
+      // 3. Paquete o subdirectorio (__init__.py implícito)
+      if (limpia.endsWith("/__init__.py") || limpia.endsWith("/__init__.js")) {
+        let carpeta = limpia.replace(/\/__init__\.(py|js)$/, "");
+        let existeEnVFS = Object.keys(sistemaArchivos).some(k => k.startsWith(carpeta + "/"));
+        if (existeEnVFS) return "";
+      }
+
+      // 4. Búsqueda por notación de puntos (ej: modulos.operaciones)
+      let sinExt = limpia.replace(/\.(py|js)$/, "");
+      let rutaConPy = sinExt.replace(/\./g, "/") + ".py";
+      if (sistemaArchivos[rutaConPy] !== undefined) {
+        return sistemaArchivos[rutaConPy];
+      }
+
+      // 5. Archivos internos de la librería estándar de Skulpt
+      if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
+        return Sk.builtinFiles["files"][x];
+      }
+
+      throw "No se encontró el módulo: '" + x + "'";
     }
 
-    // Configuración y Ejecución Skulpt 1.2.0
+    // Ejecución en Skulpt
     function ejecutarCodigo() {
       salidaConsola.textContent = "";
       estadoEjecucion.textContent = "Ejecutando...";
@@ -733,17 +570,17 @@ def restar(a, b):
       });
 
       promise.then(() => {
-        estadoEjecucion.textContent = "Terminado con éxito";
+        estadoEjecucion.textContent = "Python Listo";
       }).catch((err) => {
-        estadoEjecucion.textContent = "Error de ejecución";
+        estadoEjecucion.textContent = "Error";
         const msg = document.createElement("span");
-        msg.className = "console-output-error";
-        msg.textContent = "\n" + err.toString();
+        msg.className = "console-error";
+        msg.textContent = "\n[Error] " + err.toString();
         salidaConsola.appendChild(msg);
       });
     }
 
-    // Barra de Símbolos Rápida
+    // Botones de símbolos para móvil
     function insertarSimbolo(sym) {
       editor.focus();
       const doc = editor.getDoc();
@@ -751,28 +588,19 @@ def restar(a, b):
 
       if (sym === 'NAV_LEFT') {
         if (cursor.ch > 0) doc.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
-        else if (cursor.line > 0) {
-          doc.setCursor({ line: cursor.line - 1, ch: editor.getLine(cursor.line - 1).length });
-        }
         return;
       }
       if (sym === 'NAV_RIGHT') {
-        const lineLen = editor.getLine(cursor.line).length;
-        if (cursor.ch < lineLen) doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-        else if (cursor.line < editor.lineCount() - 1) {
-          doc.setCursor({ line: cursor.line + 1, ch: 0 });
-        }
+        doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
         return;
       }
-      if (sym === 'UNDO') { editor.undo(); return; }
-      if (sym === 'REDO') { editor.redo(); return; }
       if (sym === 'TAB') {
-        doc.replaceSelection(' '.repeat(editor.getOption('tabSize') || 4));
+        doc.replaceSelection('    ');
         return;
       }
 
       doc.replaceRange(sym, cursor);
-      if (sym === '()' || sym === '[]' || sym === '{}' || sym === '""' || sym === "''") {
+      if (sym === '()' || sym === '[]' || sym === '{}' || sym === "''" || sym === '""') {
         doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
       } else if (sym === 'print()') {
         doc.setCursor({ line: cursor.line, ch: cursor.ch + 6 });
@@ -781,31 +609,21 @@ def restar(a, b):
       }
     }
 
-    // Listeners de UI
     document.querySelectorAll('.sym-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sym = btn.getAttribute('data-sym');
-        if (sym) insertarSimbolo(sym);
-      });
+      btn.addEventListener('click', () => insertarSimbolo(btn.getAttribute('data-sym')));
     });
 
     const overlay = document.getElementById('overlay');
     const sidebar = document.getElementById('sidebar');
 
     function toggleSidebar(abrir) {
-      if (abrir) {
-        overlay.classList.add('activo');
-        sidebar.classList.add('abierto');
-      } else {
-        overlay.classList.remove('activo');
-        sidebar.classList.remove('abierto');
-      }
+      overlay.classList.toggle('activo', abrir);
+      sidebar.classList.toggle('abierto', abrir);
     }
 
     document.getElementById('btnCarpeta').addEventListener('click', () => toggleSidebar(true));
     document.getElementById('btnCerrarSidebar').addEventListener('click', () => toggleSidebar(false));
     overlay.addEventListener('click', () => toggleSidebar(false));
-
     document.getElementById('btnEjecutar').addEventListener('click', ejecutarCodigo);
     document.getElementById('btnLimpiarConsola').addEventListener('click', () => {
       salidaConsola.textContent = '';
@@ -813,14 +631,13 @@ def restar(a, b):
     });
 
     document.getElementById('btnNuevoScript').addEventListener('click', () => {
-      const nombre = prompt('Nombre del nuevo archivo:', 'nuevo.py');
+      const nombre = prompt('Nombre del script:', 'script.py');
       if (nombre && !sistemaArchivos[nombre]) {
-        sistemaArchivos[nombre] = '# Nuevo archivo Python\n';
+        sistemaArchivos[nombre] = '# Código Python\n';
         abrirArchivo(nombre);
       }
     });
 
-    // Inicializar vistas
     renderizarPestanas();
     renderizarArbolArchivos();
   </script>

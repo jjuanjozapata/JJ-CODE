@@ -133,7 +133,7 @@
     }
     .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
 
-    /* Barra de pestañas múltiples con botón '+' */
+    /* Barra de pestañas múltiples */
     .tab-bar {
       flex-shrink: 0;
       background-color: #111B21;
@@ -351,6 +351,13 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    /* Elementos del árbol con soporte Long-Press */
+    .tree-folder, .tree-file {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
     .tree-folder {
       font-size: 13px;
       color: #FF5198;
@@ -358,21 +365,50 @@
       padding: 8px 6px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      border-bottom: 1px solid #16242D;
-      margin-top: 6px;
+      justify-content: space-between;
+      border-radius: 6px;
+      margin-top: 4px;
+      cursor: pointer;
+      background: rgba(22, 36, 45, 0.5);
     }
+    .tree-folder:active { background: #16242D; }
+
+    .tree-folder-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .folder-arrow {
+      font-size: 11px;
+      color: #3CA9E2;
+      width: 14px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .folder-children {
+      margin-left: 10px;
+      padding-left: 6px;
+      border-left: 1px dashed #233642;
+      display: flex;
+      flex-direction: column;
+    }
+    .folder-children.colapsado { display: none; }
 
     .tree-file {
       font-size: 13px;
       color: #E0E2E4;
-      padding: 10px 12px;
+      padding: 9px 10px;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      margin: 3px 0;
+      margin: 2px 0;
       background: #16242D;
     }
     .tree-file:active { background-color: #233642; }
@@ -384,16 +420,16 @@
     }
 
     .tree-file-sub {
-      margin-left: 14px;
       background: #131E25;
+      font-size: 12px;
     }
 
-    .btn-delete-file {
+    .tree-empty-folder {
+      font-size: 11px;
       color: #5C7482;
-      font-size: 14px;
-      padding: 4px 8px;
+      padding: 6px 10px;
+      font-style: italic;
     }
-    .btn-delete-file:active { color: #ef4444; }
 
     /* Modales */
     .modal-overlay {
@@ -423,6 +459,7 @@
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
     .modal-input-group {
       display: flex;
@@ -472,6 +509,31 @@
       color: #3CA9E2;
     }
     .modal-btn:active { opacity: 0.85; }
+
+    /* Menú Contextual (Long Press) */
+    .context-menu-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .context-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #111B21;
+      border: 1px solid #233642;
+      color: #E0E2E4;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .context-btn:active { background: #1A2B34; }
+    .context-btn.danger { color: #FF5198; border-color: rgba(255, 81, 152, 0.3); }
+    .context-btn.danger:active { background: rgba(255, 81, 152, 0.15); }
   </style>
 </head>
 <body>
@@ -490,7 +552,7 @@
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
 
-  <!-- Modal Crear Archivo (Opciones Crear / Abrir separadas) -->
+  <!-- Modal Crear Archivo -->
   <div class="modal-overlay" id="modalCrearArchivo">
     <div class="modal-box">
       <h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
@@ -530,7 +592,20 @@
     </div>
   </div>
 
-  <!-- Modal Listo / Diagnóstico -->
+  <!-- Modal Menú Contextual (Long Press) -->
+  <div class="modal-overlay" id="modalContextual">
+    <div class="modal-box">
+      <h3 id="contextualTitulo">Opciones <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+      <p id="contextualSubtitulo" style="font-size: 12px; color: #8198a5; margin-bottom: 12px; word-break: break-all;"></p>
+      <div class="context-menu-actions">
+        <button class="context-btn" id="btnCtxCompartir">📤 Compartir / Exportar</button>
+        <button class="context-btn" id="btnCtxDescargar">⬇️ Descargar archivo</button>
+        <button class="context-btn danger" id="btnCtxEliminar">🗑 Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Diagnóstico / Listo -->
   <div class="modal-overlay" id="modalListo">
     <div class="modal-box">
       <h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
@@ -594,6 +669,7 @@
       "ayuda.py": "# Archivo secundario para practicar con pestañas\ndef sumar(a, b):\n    return a + b\n\nprint('Total:', sumar(10, 5))"
     };
     let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
+    let carpetasEstado = JSON.parse(localStorage.getItem('py_carpetas_estado')) || {};
     let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "ayuda.py"];
     let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
 
@@ -659,7 +735,6 @@
         contenedor.appendChild(div);
       });
 
-      // Botón '+' al final de las pestañas
       const btnMas = document.createElement('button');
       btnMas.className = 'btn-nueva-pestana';
       btnMas.innerHTML = '+';
@@ -690,7 +765,7 @@
       pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
       if (pestanasAbiertas.length === 0) {
         const primera = Object.keys(sistemaArchivos)[0];
-        pestanasAbiertas.push(primera);
+        if (primera) pestanasAbiertas.push(primera);
       }
       if (archivoActual === ruta) {
         cambiarPestana(pestanasAbiertas[pestanasAbiertas.length - 1]);
@@ -794,7 +869,344 @@
         abrirEnPestana(rutaCompleta);
       } else {
         renderizarPestanas();
+        renderizarArchivos();
         alert(`Archivo "${rutaCompleta}" creado correctamente.`);
+      }
+    }
+
+    // --- HELPER: DETECTOR DE LONG PRESS (500ms) ---
+    function configurarLongPress(elemento, callbackClick, callbackLongPress) {
+      let pressTimer = null;
+      let ejecutoLongPress = false;
+      let startX = 0, startY = 0;
+
+      const inicio = (e) => {
+        ejecutoLongPress = false;
+        if (e.touches && e.touches.length > 0) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
+        pressTimer = setTimeout(() => {
+          ejecutoLongPress = true;
+          if (navigator.vibrate) navigator.vibrate(45);
+          callbackLongPress(e);
+        }, 500);
+      };
+
+      const movimiento = (e) => {
+        if (!pressTimer) return;
+        if (e.touches && e.touches.length > 0) {
+          const diffX = Math.abs(e.touches[0].clientX - startX);
+          const diffY = Math.abs(e.touches[0].clientY - startY);
+          if (diffX > 8 || diffY > 8) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+        }
+      };
+
+      const cancelar = () => {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      };
+
+      const fin = (e) => {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+        if (!ejecutoLongPress && callbackClick) {
+          callbackClick(e);
+        }
+      };
+
+      // Eventos táctiles
+      elemento.addEventListener('touchstart', inicio, { passive: true });
+      elemento.addEventListener('touchmove', movimiento, { passive: true });
+      elemento.addEventListener('touchend', fin);
+      elemento.addEventListener('touchcancel', cancelar);
+
+      // Eventos de ratón
+      elemento.addEventListener('mousedown', (e) => { if (e.button === 0) inicio(e); });
+      elemento.addEventListener('mousemove', movimiento);
+      elemento.addEventListener('mouseup', fin);
+      elemento.addEventListener('mouseleave', cancelar);
+
+      // Desactivar menú contextual nativo de Safari
+      elemento.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+
+    // --- MENÚ CONTEXTUAL / ACCIONES ---
+    let elementoContextual = { tipo: '', ruta: '' };
+
+    function abrirMenuContextual(tipo, ruta) {
+      elementoContextual = { tipo, ruta };
+      const titulo = document.getElementById('contextualTitulo');
+      const subtitulo = document.getElementById('contextualSubtitulo');
+      const btnDescargar = document.getElementById('btnCtxDescargar');
+
+      titulo.innerHTML = `${tipo === 'carpeta' ? '📁 Carpeta' : '📄 Archivo'} <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span>`;
+      subtitulo.textContent = ruta;
+      btnDescargar.textContent = tipo === 'carpeta' ? '⬇️ Descargar todo (.json)' : '⬇️ Descargar (.py)';
+
+      document.getElementById('modalContextual').classList.add('activo');
+      document.getElementById('btnCerrarContextual').onclick = () => {
+        document.getElementById('modalContextual').classList.remove('activo');
+      };
+    }
+
+    async function ejecutarCompartirContextual() {
+      const { tipo, ruta } = elementoContextual;
+      document.getElementById('modalContextual').classList.remove('activo');
+
+      if (tipo === 'archivo') {
+        const contenido = sistemaArchivos[ruta] || "";
+        if (navigator.share) {
+          try {
+            const nombreArchivo = ruta.split('/').pop();
+            const file = new File([contenido], nombreArchivo, { type: 'text/x-python' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: nombreArchivo });
+            } else {
+              await navigator.share({ title: nombreArchivo, text: contenido });
+            }
+          } catch (e) {
+            if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
+          }
+        } else {
+          navigator.clipboard.writeText(contenido).then(() => {
+            alert("Código copiado al portapapeles.");
+          });
+        }
+      } else {
+        const archivosCarpeta = {};
+        for (let k in sistemaArchivos) {
+          if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
+        }
+        const dataJson = JSON.stringify(archivosCarpeta, null, 2);
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: `Carpeta ${ruta}`, text: dataJson });
+          } catch (e) {
+            if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
+          }
+        } else {
+          navigator.clipboard.writeText(dataJson).then(() => {
+            alert("Archivos de la carpeta copiados al portapapeles en formato JSON.");
+          });
+        }
+      }
+    }
+
+    function ejecutarDescargarContextual() {
+      const { tipo, ruta } = elementoContextual;
+      document.getElementById('modalContextual').classList.remove('activo');
+
+      if (tipo === 'archivo') {
+        const contenido = sistemaArchivos[ruta] || "";
+        const blob = new Blob([contenido], { type: 'text/x-python;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = ruta.split('/').pop();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const archivosCarpeta = {};
+        for (let k in sistemaArchivos) {
+          if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
+        }
+        const blob = new Blob([JSON.stringify(archivosCarpeta, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${ruta}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function ejecutarEliminarContextual() {
+      const { tipo, ruta } = elementoContextual;
+      document.getElementById('modalContextual').classList.remove('activo');
+      if (tipo === 'archivo') {
+        eliminarArchivo(ruta);
+      } else {
+        eliminarCarpeta(ruta);
+      }
+    }
+
+    // --- EXPLORADOR DE ARCHIVOS (ÁRBOL ANIDADO Y COLAPSABLE) ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const estaAbierto = sidebar.classList.toggle('abierto');
+      overlay.classList.toggle('activo', estaAbierto);
+      if (estaAbierto) renderizarArchivos();
+    }
+
+    function renderizarArchivos() {
+      const contenedor = document.getElementById('listaArchivos');
+      contenedor.innerHTML = '';
+
+      // 1. Renderizar Carpetas y sus subarchivos
+      carpetasCreadas.forEach(carpeta => {
+        const estaAbierta = carpetasEstado[carpeta] !== false; // por defecto abierta
+
+        const folderWrap = document.createElement('div');
+        folderWrap.style.marginBottom = '6px';
+
+        const folderHead = document.createElement('div');
+        folderHead.className = 'tree-folder';
+        folderHead.innerHTML = `
+          <div class="tree-folder-left">
+            <span class="folder-arrow">${estaAbierta ? '▾' : '▸'}</span>
+            <span>📁 ${carpeta}</span>
+          </div>
+          <span style="font-size:10px; color:#5C7482; padding-right:4px;">•••</span>
+        `;
+
+        configurarLongPress(
+          folderHead,
+          () => {
+            // Click normal: Colapsar / Expandir
+            carpetasEstado[carpeta] = !estaAbierta;
+            localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+            renderizarArchivos();
+          },
+          () => {
+            // Long Press: Opciones contextuales
+            abrirMenuContextual('carpeta', carpeta);
+          }
+        );
+
+        folderWrap.appendChild(folderHead);
+
+        const subFilesContainer = document.createElement('div');
+        subFilesContainer.className = `folder-children ${estaAbierta ? '' : 'colapsado'}`;
+
+        const archivosDeEstaCarpeta = Object.keys(sistemaArchivos).filter(k => k.startsWith(carpeta + '/'));
+
+        if (archivosDeEstaCarpeta.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'tree-empty-folder';
+          empty.textContent = '(Carpeta vacía)';
+          subFilesContainer.appendChild(empty);
+        } else {
+          archivosDeEstaCarpeta.forEach(ruta => {
+            const nombreArchivo = ruta.replace(carpeta + '/', '');
+            const fileItem = document.createElement('div');
+            fileItem.className = `tree-file tree-file-sub ${ruta === archivoActual ? 'activo' : ''}`;
+            fileItem.innerHTML = `
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${nombreArchivo}</span>
+            `;
+
+            configurarLongPress(
+              fileItem,
+              () => {
+                abrirEnPestana(ruta);
+                toggleSidebar();
+              },
+              () => {
+                abrirMenuContextual('archivo', ruta);
+              }
+            );
+
+            subFilesContainer.appendChild(fileItem);
+          });
+        }
+
+        folderWrap.appendChild(subFilesContainer);
+        contenedor.appendChild(folderWrap);
+      });
+
+      // 2. Renderizar Archivos en Raíz (sin carpeta)
+      const archivosRaiz = Object.keys(sistemaArchivos).filter(k => !k.includes('/'));
+      if (archivosRaiz.length > 0) {
+        const rootHeader = document.createElement('div');
+        rootHeader.style.cssText = 'font-size:11px; color:#5C7482; font-weight:bold; margin: 10px 0 4px 6px; text-transform:uppercase;';
+        rootHeader.textContent = 'Raíz';
+        contenedor.appendChild(rootHeader);
+
+        archivosRaiz.forEach(ruta => {
+          const fileItem = document.createElement('div');
+          fileItem.className = `tree-file ${ruta === archivoActual ? 'activo' : ''}`;
+          fileItem.innerHTML = `
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${ruta}</span>
+          `;
+
+          configurarLongPress(
+            fileItem,
+            () => {
+              abrirEnPestana(ruta);
+              toggleSidebar();
+            },
+            () => {
+              abrirMenuContextual('archivo', ruta);
+            }
+          );
+
+          contenedor.appendChild(fileItem);
+        });
+      }
+    }
+
+    function crearCarpetaPrompt() {
+      const nombre = prompt("Nombre de la nueva carpeta:");
+      if (!nombre) return;
+      const nombreLimpio = nombre.replace(/[^\w-]/gi, '').trim();
+      if (!nombreLimpio) return alert("Nombre de carpeta inválido.");
+      if (!carpetasCreadas.includes(nombreLimpio)) {
+        carpetasCreadas.push(nombreLimpio);
+        carpetasEstado[nombreLimpio] = true;
+        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+        localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+        renderizarArchivos();
+      }
+    }
+
+    function eliminarArchivo(ruta) {
+      if (Object.keys(sistemaArchivos).length <= 1) return alert("Debes conservar al menos un archivo.");
+      if (confirm(`¿Eliminar ${ruta}?`)) {
+        delete sistemaArchivos[ruta];
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+        cerrarPestana(ruta);
+        renderizarArchivos();
+      }
+    }
+
+    function eliminarCarpeta(carpeta) {
+      if (confirm(`¿Eliminar la carpeta "${carpeta}" y todos los archivos contenidos?`)) {
+        carpetasCreadas = carpetasCreadas.filter(c => c !== carpeta);
+        delete carpetasEstado[carpeta];
+        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+        localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+
+        for (let ruta in sistemaArchivos) {
+          if (ruta.startsWith(carpeta + '/')) {
+            delete sistemaArchivos[ruta];
+            pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
+          }
+        }
+
+        if (Object.keys(sistemaArchivos).length === 0) {
+          sistemaArchivos["main.py"] = "# Archivo principal\nprint('Hola Mundo')";
+          pestanasAbiertas = ["main.py"];
+          archivoActual = "main.py";
+        } else if (!sistemaArchivos[archivoActual]) {
+          archivoActual = Object.keys(sistemaArchivos)[0];
+          if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
+        }
+
+        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+        cambiarPestana(archivoActual);
+        renderizarArchivos();
       }
     }
 
@@ -863,68 +1275,6 @@
       if (!el) return;
       el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
       el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
-    }
-
-    // Sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('overlay');
-      const estaAbierto = sidebar.classList.toggle('abierto');
-      overlay.classList.toggle('activo', estaAbierto);
-      if (estaAbierto) renderizarArchivos();
-    }
-
-    function renderizarArchivos() {
-      const contenedor = document.getElementById('listaArchivos');
-      contenedor.innerHTML = '';
-
-      carpetasCreadas.forEach(carpeta => {
-        const div = document.createElement('div');
-        div.className = 'tree-folder';
-        div.innerHTML = `📁 ${carpeta}`;
-        contenedor.appendChild(div);
-      });
-
-      for (const ruta in sistemaArchivos) {
-        const item = document.createElement('div');
-        const esSub = ruta.includes('/');
-        item.className = `tree-file ${esSub ? 'tree-file-sub' : ''} ${ruta === archivoActual ? 'activo' : ''}`;
-        
-        item.innerHTML = `
-          <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${ruta}</span>
-          <span class="btn-delete-file">🗑</span>
-        `;
-
-        item.querySelector('span:first-child').addEventListener('click', () => {
-          abrirEnPestana(ruta);
-          toggleSidebar();
-        });
-        item.querySelector('.btn-delete-file').addEventListener('click', (e) => {
-          e.stopPropagation();
-          eliminarArchivo(ruta);
-        });
-        contenedor.appendChild(item);
-      }
-    }
-
-    function crearCarpetaPrompt() {
-      const nombre = prompt("Nombre de la nueva carpeta:");
-      if (!nombre) return;
-      if (!carpetasCreadas.includes(nombre)) {
-        carpetasCreadas.push(nombre);
-        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
-        renderizarArchivos();
-      }
-    }
-
-    function eliminarArchivo(ruta) {
-      if (Object.keys(sistemaArchivos).length <= 1) return alert("Debes conservar al menos un archivo.");
-      if (confirm(`¿Eliminar ${ruta}?`)) {
-        delete sistemaArchivos[ruta];
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        cerrarPestana(ruta);
-        renderizarArchivos();
-      }
     }
 
     function abrirModalDiagnostico() {
@@ -1024,6 +1374,11 @@
       salidaConsola.innerHTML = "Motor Python reiniciado.\n";
       document.getElementById('modalListo').classList.remove('activo');
     });
+
+    // Eventos Menú Contextual
+    bindAccion('btnCtxCompartir', ejecutarCompartirContextual);
+    bindAccion('btnCtxDescargar', ejecutarDescargarContextual);
+    bindAccion('btnCtxEliminar', ejecutarEliminarContextual);
 
     renderizarPestanas();
   </script>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Python Móvil - IDE PWA</title>
+  <title>Python 3 Móvil - IDE PWA</title>
   
   <link rel="icon" type="image/png" href="icono.png">
   <link rel="apple-touch-icon" href="icono.png">
@@ -12,9 +12,8 @@
   <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   
-  <!-- Skulpt 1.2.0 Core & Standard Library -->
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+  <!-- Pyodide (Python 3 Oficial sobre WebAssembly) -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
   
   <!-- CodeMirror Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -161,6 +160,7 @@
       background: #0f111a !important;
       color: #e0e6ed !important;
     }
+
     .CodeMirror-gutters {
       background: #0f111a !important;
       border-right: 1px solid var(--border-color) !important;
@@ -360,7 +360,7 @@
 
     <div class="status-bar">
       <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
-      <span id="estadoEjecucion">Listo</span>
+      <span id="estadoEjecucion">Iniciando motor Python 3...</span>
     </div>
 
     <div class="console-panel">
@@ -373,6 +373,10 @@
   </div>
 
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
     function safeParse(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
@@ -383,20 +387,24 @@
     }
 
     let sistemaArchivos = safeParse('py_archivos', {
-      "prueba.py": `# Demostración de Hardware iOS y Archivos Virtuales
-import ios
+      "prueba.py": `# Python 3 Estándar Completo con Soporte Unicode
 import modulos.operaciones as op
 
-# Probar vibración y hardware
-ios.vibrate(60)
-print('Batería:', ios.get_battery())
+def obtener_compañeros(cantidad_de_compañeros):
+    compañeros = []
+    for i in range(cantidad_de_compañeros):
+        nombre = input("Ingrese el nombre del compañero: ")
+        edad = int(input("Ingrese la edad del compañero: "))
+        compañeros.append((nombre, edad))
+    return compañeros
 
-# Escritura de archivos locales con open()
-with open('datos.txt', 'w') as f:
-    f.write('Guardado desde Python!')
+print("Suma módulo (5 + 3):", op.sumar(5, 3))
 
-print('5 + 3 =', op.sumar(5, 3))
-print('Archivo datos.txt creado con éxito.')
+# Escritura de archivos locales nativa
+with open('datos.txt', 'w', encoding='utf-8') as f:
+    f.write('Guardado desde Python 3 estándar!')
+
+print("Archivo datos.txt creado con éxito.")
 `,
       "modulos/operaciones.py": `def sumar(a, b):
     return a + b
@@ -498,89 +506,79 @@ def restar(a, b):
       renderizarPestanas();
     }
 
-    // Resolutor VFS con soporte completo para submódulos y paquetes
-    function builtinRead(x) {
-      // 1. Módulo ios
-      if (x === "ios" || x === "ios.js" || x === "src/lib/ios.js") {
-        return `
-          var $builtinmodule = function(name) {
-            var mod = {};
-            var fnBateria = new Sk.builtin.func(function() {
-              return new Sk.builtin.str("100% (iOS PWA)");
-            });
-            mod.get_battery = fnBateria;
-            mod.get_bateria = fnBateria;
-            mod.vibrate = new Sk.builtin.func(function(ms) {
-              if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
-              return Sk.builtin.none.none$;
-            });
-            return mod;
-          };
-        `;
+    // Inicialización del Motor Pyodide
+    let pyodide = null;
+    async function inicializarPyodide() {
+      try {
+        pyodide = await loadPyodide({
+          stdout: (text) => {
+            salidaConsola.textContent += text + "\n";
+            salidaConsola.scrollTop = salidaConsola.scrollHeight;
+          },
+          stderr: (text) => {
+            const span = document.createElement("span");
+            span.className = "console-error";
+            span.textContent = text + "\n";
+            salidaConsola.appendChild(span);
+          }
+        });
+
+        // Configuración de input() nativo mediante prompt
+        pyodide.setStdin({
+          stdin: () => prompt("Entrada de Python (input):") || ""
+        });
+
+        estadoEjecucion.textContent = "Python 3 Listo";
+      } catch (err) {
+        estadoEjecucion.textContent = "Error cargando motor";
+        console.error(err);
       }
+    }
+    inicializarPyodide();
 
-      // Normalizar rutas
-      let limpia = x.replace(/^src\/lib\//, "").replace(/^\.\//, "");
-
-      // 2. Coincidencia directa en el VFS
-      if (sistemaArchivos[limpia] !== undefined) {
-        return sistemaArchivos[limpia];
+    // Sincronizar VFS con el sistema de archivos de Pyodide (MEMFS)
+    function sincronizarVFS() {
+      if (!pyodide) return;
+      for (const ruta in sistemaArchivos) {
+        const partes = ruta.split("/");
+        if (partes.length > 1) {
+          let dirAcumulado = "";
+          for (let i = 0; i < partes.length - 1; i++) {
+            dirAcumulado += (i === 0 ? "" : "/") + partes[i];
+            try {
+              pyodide.FS.mkdir(dirAcumulado);
+            } catch (e) {} // Ignorar si el directorio ya existe
+          }
+        }
+        pyodide.FS.writeFile(ruta, sistemaArchivos[ruta], { encoding: "utf8" });
       }
-
-      // 3. Paquete o subdirectorio (__init__.py implícito)
-      if (limpia.endsWith("/__init__.py") || limpia.endsWith("/__init__.js")) {
-        let carpeta = limpia.replace(/\/__init__\.(py|js)$/, "");
-        let existeEnVFS = Object.keys(sistemaArchivos).some(k => k.startsWith(carpeta + "/"));
-        if (existeEnVFS) return "";
-      }
-
-      // 4. Búsqueda por notación de puntos (ej: modulos.operaciones)
-      let sinExt = limpia.replace(/\.(py|js)$/, "");
-      let rutaConPy = sinExt.replace(/\./g, "/") + ".py";
-      if (sistemaArchivos[rutaConPy] !== undefined) {
-        return sistemaArchivos[rutaConPy];
-      }
-
-      // 5. Archivos internos de la librería estándar de Skulpt
-      if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
-        return Sk.builtinFiles["files"][x];
-      }
-
-      throw "No se encontró el módulo: '" + x + "'";
     }
 
-    // Ejecución en Skulpt
-    function ejecutarCodigo() {
+    // Ejecución de Código Python 3
+    async function ejecutarCodigo() {
+      if (!pyodide) {
+        alert("El motor Python 3 aún se está descargando/iniciando...");
+        return;
+      }
+
       salidaConsola.textContent = "";
       estadoEjecucion.textContent = "Ejecutando...";
-      
-      Sk.pre = "salidaConsola";
-      Sk.configure({
-        output: (texto) => {
-          salidaConsola.textContent += texto;
-          salidaConsola.scrollTop = salidaConsola.scrollHeight;
-        },
-        read: builtinRead,
-        __future__: Sk.python3
-      });
 
-      const codigo = editor.getValue();
-      const promise = Sk.misceval.asyncToPromise(() => {
-        return Sk.importMainWithBody("<stdin>", false, codigo, true);
-      });
-
-      promise.then(() => {
-        estadoEjecucion.textContent = "Python Listo";
-      }).catch((err) => {
-        estadoEjecucion.textContent = "Error";
-        const msg = document.createElement("span");
-        msg.className = "console-error";
-        msg.textContent = "\n[Error] " + err.toString();
-        salidaConsola.appendChild(msg);
-      });
+      try {
+        sincronizarVFS();
+        const codigo = editor.getValue();
+        await pyodide.runPythonAsync(codigo);
+        estadoEjecucion.textContent = "Python 3 Listo";
+      } catch (err) {
+        estadoEjecucion.textContent = "Error de ejecución";
+        const span = document.createElement("span");
+        span.className = "console-error";
+        span.textContent = "\n" + err;
+        salidaConsola.appendChild(span);
+      }
     }
 
-    // Botones de símbolos para móvil
+    // Botones de accesos rápidos
     function insertarSimbolo(sym) {
       editor.focus();
       const doc = editor.getDoc();
@@ -633,7 +631,7 @@ def restar(a, b):
     document.getElementById('btnNuevoScript').addEventListener('click', () => {
       const nombre = prompt('Nombre del script:', 'script.py');
       if (nombre && !sistemaArchivos[nombre]) {
-        sistemaArchivos[nombre] = '# Código Python\n';
+        sistemaArchivos[nombre] = '# Código Python 3\n';
         abrirArchivo(nombre);
       }
     });

@@ -1739,30 +1739,6 @@
 
     buscadorInput.addEventListener('input', () => actualizarBusqueda(false));
 
-    document.getElementById('btnToggleReplace').addEventListener('click', () => {
-      barraReemplazo.classList.toggle('activa');
-    });
-
-    document.getElementById('btnReemplazarUno').addEventListener('click', () => {
-      if (indiceActual >= 0 && coincidencias[indiceActual]) {
-        const match = coincidencias[indiceActual];
-        const nuevoTexto = inputReemplazo.value;
-        editor.replaceRange(nuevoTexto, match.from, match.to);
-        actualizarBusqueda(false);
-      }
-    });
-
-    document.getElementById('btnReemplazarTodo').addEventListener('click', () => {
-      const query = buscadorInput.value;
-      const nuevoTexto = inputReemplazo.value;
-      if (!query) return;
-      let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
-      while (cursor.findNext()) {
-        cursor.replace(nuevoTexto);
-      }
-      actualizarBusqueda(false);
-    });
-
     // Control táctil anti-ghost clicks
     let lastActionTime = 0;
     function bindAccion(id, fn) {
@@ -1776,6 +1752,30 @@
         fn();
       });
     }
+
+    bindAccion('btnToggleReplace', () => {
+      barraReemplazo.classList.toggle('activa');
+    });
+
+    bindAccion('btnReemplazarUno', () => {
+      if (indiceActual >= 0 && coincidencias[indiceActual]) {
+        const match = coincidencias[indiceActual];
+        const nuevoTexto = inputReemplazo.value;
+        editor.replaceRange(nuevoTexto, match.from, match.to);
+        actualizarBusqueda(false);
+      }
+    });
+
+    bindAccion('btnReemplazarTodo', () => {
+      const query = buscadorInput.value;
+      const nuevoTexto = inputReemplazo.value;
+      if (!query) return;
+      let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
+      while (cursor.findNext()) {
+        cursor.replace(nuevoTexto);
+      }
+      actualizarBusqueda(false);
+    });
 
     function abrirModalDiagnostico() {
       const modal = document.getElementById('modalListo');
@@ -1846,7 +1846,7 @@
         }
         if (name === "write") {
           return new Sk.builtin.func(function(data) {
-            var strData = Sk.ffi.remapToJs(data);
+            var strData = String(Sk.ffi.remapToJs(data));
             var fn = self.filename;
             if (self.mode === 'a' && sistemaArchivos[fn]) {
               sistemaArchivos[fn] += strData;
@@ -1885,6 +1885,7 @@
         if (name === "readlines") {
           return new Sk.builtin.func(function() {
             var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
+            if (!content) return new Sk.builtin.list([]);
             var lines = content.split('\n').map(function(l, i, arr) {
               return new Sk.builtin.str(i < arr.length - 1 ? l + '\n' : l);
             });
@@ -1965,7 +1966,10 @@
             input.focus();
             salidaConsola.scrollTop = salidaConsola.scrollHeight;
 
+            let respondido = false;
             const responder = () => {
+              if (respondido) return;
+              respondido = true;
               let val = input.value;
               input.remove();
               salidaConsola.appendChild(document.createTextNode(val + "\n"));

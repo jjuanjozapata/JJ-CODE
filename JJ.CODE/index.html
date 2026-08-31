@@ -1833,67 +1833,70 @@
         this.mode = mode || 'r';
         this.pos = 0;
       }
-      Sk.abstr.setUpInheritance(VfsFileObject, Sk.builtin.object);
-      VfsFileObject.prototype.__class__ = VfsFileObject;
+      Sk.abstr.setUpInheritance("VfsFile", VfsFileObject, Sk.builtin.object);
 
-      VfsFileObject.prototype["__enter__"] = new Sk.builtin.func(function(self) {
-        return self;
-      });
+      VfsFileObject.prototype.tp$getattr = function(pyName) {
+        var name = (typeof pyName === 'string') ? pyName : (pyName.v || pyName);
+        var self = this;
 
-      VfsFileObject.prototype["__exit__"] = new Sk.builtin.func(function(self, exc_type, exc_val, exc_tb) {
-        return Sk.builtin.none.none$;
-      });
-
-      VfsFileObject.prototype["write"] = new Sk.builtin.func(function(self, data) {
-        var strData = Sk.ffi.remapToJs(data);
-        var fn = self.filename;
-        if (self.mode === 'a' && sistemaArchivos[fn]) {
-          sistemaArchivos[fn] += strData;
-        } else {
-          sistemaArchivos[fn] = strData;
+        if (name === "__enter__") {
+          return new Sk.builtin.func(function() { return self; });
         }
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        if (archivoActual === fn) {
-          editor.setValue(sistemaArchivos[fn]);
+        if (name === "__exit__") {
+          return new Sk.builtin.func(function(exc_type, exc_val, exc_tb) { return Sk.builtin.none.none$; });
         }
-        renderizarArchivos();
-        return Sk.builtin.none.none$;
-      });
-
-      VfsFileObject.prototype["read"] = new Sk.builtin.func(function(self) {
-        var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
-        return new Sk.builtin.str(content);
-      });
-
-      VfsFileObject.prototype["readline"] = new Sk.builtin.func(function(self) {
-        var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
-        var remaining = content.substring(self.pos);
-        var idx = remaining.indexOf('\n');
-        if (idx === -1) {
-          self.pos = content.length;
-          return new Sk.builtin.str(remaining);
-        } else {
-          var line = remaining.substring(0, idx + 1);
-          self.pos += idx + 1;
-          return new Sk.builtin.str(line);
+        if (name === "write") {
+          return new Sk.builtin.func(function(data) {
+            var strData = Sk.ffi.remapToJs(data);
+            var fn = self.filename;
+            if (self.mode === 'a' && sistemaArchivos[fn]) {
+              sistemaArchivos[fn] += strData;
+            } else {
+              sistemaArchivos[fn] = strData;
+            }
+            localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+            if (archivoActual === fn) {
+              editor.setValue(sistemaArchivos[fn]);
+            }
+            renderizarArchivos();
+            return Sk.builtin.none.none$;
+          });
         }
-      });
-
-      VfsFileObject.prototype["readlines"] = new Sk.builtin.func(function(self) {
-        var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
-        var lines = content.split('\n').map(function(l, i, arr) {
-          return new Sk.builtin.str(i < arr.length - 1 ? l + '\n' : l);
-        });
-        return new Sk.builtin.list(lines);
-      });
-
-      VfsFileObject.prototype["close"] = new Sk.builtin.func(function(self) {
-        return Sk.builtin.none.none$;
-      });
-
-      VfsFileObject.prototype["flush"] = new Sk.builtin.func(function(self) {
-        return Sk.builtin.none.none$;
-      });
+        if (name === "read") {
+          return new Sk.builtin.func(function() {
+            var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
+            return new Sk.builtin.str(content);
+          });
+        }
+        if (name === "readline") {
+          return new Sk.builtin.func(function() {
+            var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
+            var remaining = content.substring(self.pos);
+            var idx = remaining.indexOf('\n');
+            if (idx === -1) {
+              self.pos = content.length;
+              return new Sk.builtin.str(remaining);
+            } else {
+              var line = remaining.substring(0, idx + 1);
+              self.pos += idx + 1;
+              return new Sk.builtin.str(line);
+            }
+          });
+        }
+        if (name === "readlines") {
+          return new Sk.builtin.func(function() {
+            var content = sistemaArchivos[self.filename] !== undefined ? sistemaArchivos[self.filename] : "";
+            var lines = content.split('\n').map(function(l, i, arr) {
+              return new Sk.builtin.str(i < arr.length - 1 ? l + '\n' : l);
+            });
+            return new Sk.builtin.list(lines);
+          });
+        }
+        if (name === "close" || name === "flush") {
+          return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
+        }
+        return undefined;
+      };
 
       // Registrar open() nativo
       Sk.builtins = Sk.builtins || {};

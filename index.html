@@ -500,24 +500,37 @@ def restar(a, b):
 
     // Resolutor VFS con soporte completo para submódulos y paquetes
     function builtinRead(x) {
-      // 1. Módulo ios
-      if (x === "ios" || x === "ios.js" || x === "src/lib/ios.js") {
-        return `
-          var $builtinmodule = function(name) {
-            var mod = {};
-            var fnBateria = new Sk.builtin.func(function() {
-              return new Sk.builtin.str("100% (iOS PWA)");
-            });
-            mod.get_battery = fnBateria;
-            mod.get_bateria = fnBateria;
-            mod.vibrate = new Sk.builtin.func(function(ms) {
-              if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
-              return Sk.builtin.none.none$;
-            });
-            return mod;
-          };
-        `;
-      }
+  // 1. Limpiar prefijos que agrega Skulpt internamente
+  let ruta = x.replace(/^src\/lib\//, "").replace(/^\.\//, "");
+
+  // 2. Si es el archivo exacto en el VFS
+  if (sistemaArchivos[ruta] !== undefined) {
+    return sistemaArchivos[ruta];
+  }
+
+  // 3. Si Skulpt busca __init__.py o __init__.js en una carpeta del VFS
+  if (ruta.endsWith("/__init__.py") || ruta.endsWith("/__init__.js")) {
+    let carpeta = ruta.replace(/\/__init__\.(py|js)$/, "");
+    // Si algún archivo empieza con "carpeta/", confirmamos que la carpeta existe
+    let existeCarpeta = Object.keys(sistemaArchivos).some(k => k.startsWith(carpeta + "/"));
+    if (existeCarpeta) {
+      return ""; // Devuelve módulo vacío para que Skulpt continúe
+    }
+  }
+
+  // 4. Si la ruta viene con puntos (ej: modulos.operaciones)
+  let rutaDesdePuntos = ruta.replace(/\.(py|js)$/, "").replace(/\./g, "/") + ".py";
+  if (sistemaArchivos[rutaDesdePuntos] !== undefined) {
+    return sistemaArchivos[rutaDesdePuntos];
+  }
+
+  // 5. Archivos nativos estándar de Skulpt
+  if (Sk.builtinFiles && Sk.builtinFiles["files"][x] !== undefined) {
+    return Sk.builtinFiles["files"][x];
+  }
+
+  throw "No se encontró el módulo: '" + x + "'";
+}
 
       // Normalizar rutas
       let limpia = x.replace(/^src\/lib\//, "").replace(/^\.\//, "");

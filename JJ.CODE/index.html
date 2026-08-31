@@ -12,16 +12,20 @@
   <!-- CodeMirror -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.css">
   
   <!-- Skulpt -->
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
   
+  <!-- Scripts CodeMirror y Motor de Búsqueda -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/anyword-hint.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
 
   <style>
     * {
@@ -58,7 +62,7 @@
       display: flex;
       align-items: center;
       padding: 10px 14px;
-      gap: 12px;
+      gap: 10px;
       border-bottom: 1px solid #1A2B34;
     }
 
@@ -75,15 +79,22 @@
     }
     .icon-btn:active { color: #FF5198; }
 
+    /* Barra de búsqueda interactiva */
     .search-pill {
       background-color: #1A2B34;
       border-radius: 20px;
       display: flex;
       align-items: center;
-      padding: 6px 12px;
+      padding: 4px 10px;
       flex: 1;
       gap: 6px;
       color: #5C7482;
+      border: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .search-pill:focus-within {
+      border-color: #FF5198;
+      background-color: #131E25;
     }
 
     .search-pill input {
@@ -93,7 +104,18 @@
       color: #E0E2E4;
       width: 100%;
       font-size: 13px;
-      pointer-events: none;
+      font-family: monospace;
+    }
+
+    .search-badge {
+      font-size: 11px;
+      color: #28C0A9;
+      font-family: monospace;
+      white-space: nowrap;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: #111B21;
+      display: none;
     }
 
     .btn-ejecutar-play {
@@ -108,6 +130,7 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(255, 81, 152, 0.4);
+      flex-shrink: 0;
     }
     .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
 
@@ -143,6 +166,15 @@
       top: 0; bottom: 0; left: 0; right: 0;
       font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
       font-size: 14px;
+    }
+
+    /* Resaltado de coincidencias encontradas */
+    .cm-searching {
+      background-color: rgba(255, 81, 152, 0.35) !important;
+      border-bottom: 2px solid #FF5198;
+    }
+    .CodeMirror-selectedtext {
+      background-color: rgba(60, 169, 226, 0.45) !important;
     }
 
     /* Prettier Theme */
@@ -221,7 +253,6 @@
       margin-left: 2px;
     }
 
-    /* --- PANEL LATERAL FIJO ROBUSTO --- */
     .sidebar-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -241,7 +272,6 @@
       display: flex;
       flex-direction: column;
       transition: transform 0.25s ease-out;
-      transform: translateX(0);
     }
     .sidebar.abierto { transform: translateX(300px); }
 
@@ -310,8 +340,6 @@
       margin: 3px 0;
       background: #16242D;
     }
-    .tree-file:active { background-color: #233642; }
-
     .tree-file.activo {
       background-color: #1A2B34;
       color: #3CA9E2;
@@ -329,39 +357,97 @@
       padding: 4px 8px;
     }
     .btn-delete-file:active { color: #ef4444; }
+
+    /* Modal Diagnóstico */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.activo { display: flex; }
+
+    .modal-box {
+      background-color: #16242D;
+      border: 1px solid #1A2B34;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 340px;
+      padding: 18px;
+      color: #E0E2E4;
+    }
+    .modal-box h3 {
+      font-size: 15px;
+      color: #28C0A9;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .modal-info {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #9ba1b0;
+      margin-bottom: 16px;
+    }
+    .modal-info strong { color: #E0E2E4; }
+    .modal-btn {
+      width: 100%;
+      background: #FF5198;
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Overlay -->
-  <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-  <!-- Menú lateral -->
+  <!-- Overlay y Sidebar -->
+  <div class="sidebar-overlay" id="overlay"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>EXPLORADOR DE ARCHIVOS</span>
-      <span style="cursor: pointer; font-size: 16px; padding: 4px;" onclick="toggleSidebar()">✕</span>
+      <span id="btnCerrarSidebar" style="cursor: pointer; font-size: 16px; padding: 4px;">✕</span>
     </div>
     <div class="sidebar-actions">
-      <button class="sidebar-btn" onclick="crearArchivoPrompt()">📄 + Archivo</button>
-      <button class="sidebar-btn" onclick="crearCarpetaPrompt()">📁 + Carpeta</button>
+      <button class="sidebar-btn" id="btnCrearArchivo">📄 + Archivo</button>
+      <button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
     </div>
     <div class="file-tree" id="listaArchivos"></div>
   </aside>
 
+  <!-- Modal Listo / Diagnóstico -->
+  <div class="modal-overlay" id="modalListo">
+    <div class="modal-box">
+      <h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+      <div class="modal-info" id="infoDiagnostico"></div>
+      <button class="modal-btn" id="btnReiniciarMotor">🔄 Reiniciar Motor y Variables</button>
+    </div>
+  </div>
+
   <div class="app-wrapper">
+    <!-- Barra Superior -->
     <header class="top-toolbar">
-      <!-- Botón de carpeta con evento forzado -->
-      <button class="icon-btn" id="btnCarpeta" onclick="toggleSidebar()" title="Ver Archivos">📁</button>
-      <button class="icon-btn">🔀</button>
+      <button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
+      <button class="icon-btn" id="btnRamas">🔀</button>
+      
+      <!-- Buscador -->
       <div class="search-pill">
         <span>🔍</span>
-        <input type="text" id="nombreEnBuscador" value="prueba.py">
+        <input type="text" id="buscadorInput" placeholder="Buscar en archivo..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <span class="search-badge" id="badgeCoincidencias">0/0</span>
       </div>
-      <button class="btn-ejecutar-play" onclick="ejecutarCodigo()" title="Ejecutar">
+
+      <button class="btn-ejecutar-play" id="btnEjecutar" title="Ejecutar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </button>
-      <button class="icon-btn">•••</button>
+      <button class="icon-btn" id="btnOpciones">•••</button>
     </header>
 
     <div class="tab-bar">
@@ -372,43 +458,46 @@
       <textarea id="codigo"></textarea>
     </div>
 
+    <!-- Terminal -->
     <section class="console-section" id="seccionConsola">
       <div class="console-header">
         <span style="font-weight: bold; color: #8198a5;">🖥 Consola</span>
         <div style="display: flex; gap: 14px; align-items: center;">
-          <span id="estadoMotor" style="color: #28C0A9; font-size: 11px;">Listo</span>
-          <span style="cursor: pointer; font-size: 14px;" onclick="limpiarConsola()" title="Limpiar">🗑</span>
-          <span style="cursor: pointer; font-size: 14px; padding: 4px;" onclick="toggleConsola()" id="flechaConsola" title="Ocultar / Mostrar">🔽</span>
+          <span id="estadoMotor" style="color: #28C0A9; font-size: 11px; cursor: pointer;">Listo ⚙️</span>
+          <span id="btnLimpiarConsola" style="cursor: pointer; font-size: 14px;" title="Limpiar">🗑</span>
+          <span id="flechaConsola" style="cursor: pointer; font-size: 14px; padding: 4px;" title="Ocultar / Mostrar">🔽</span>
         </div>
       </div>
       
-      <div class="console-body" id="salidaConsola" onclick="enfocarInput()"></div>
+      <div class="console-body" id="salidaConsola"></div>
       
       <div class="bottom-bar">
         <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
+        <span id="estadoInferior" style="cursor: pointer; color: #28C0A9;">Listo</span>
       </div>
     </section>
   </div>
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').then(() => console.log('¡Modo offline listo!'));
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
-    // Memoria local
+    // Persistencia Local
     let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
-      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, tus archivos se guardan automáticamente.')"
+      "prueba.py": "nombre = input('Ingresa tu nombre: ')\nprint(f'Hola {nombre}, bienvenido.')\n\n# Prueba buscando palabras o numeros\nedad = 25\nprint(f'Tu edad es: {edad}')"
     };
     let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || [];
     let archivoActual = localStorage.getItem('py_archivo_activo') || 'prueba.py';
 
     if (!sistemaArchivos[archivoActual]) {
       archivoActual = Object.keys(sistemaArchivos)[0] || 'prueba.py';
-      if (!sistemaArchivos[archivoActual]) sistemaArchivos['prueba.py'] = '# Empieza a escribir';
+      if (!sistemaArchivos[archivoActual]) sistemaArchivos['prueba.py'] = '# Archivo inicial';
     }
 
     const salidaConsola = document.getElementById("salidaConsola");
     
+    // Inicializar Editor
     const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
       mode: "python", 
       theme: "prettier", 
@@ -420,15 +509,18 @@
     });
 
     editor.setValue(sistemaArchivos[archivoActual]);
-    actualizarVistasEncabezado();
+    document.getElementById('pestanaArchivo').textContent = `</> ${archivoActual}`;
 
     editor.on("change", () => {
       sistemaArchivos[archivoActual] = editor.getValue();
       localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+      if (document.getElementById('buscadorInput').value.trim() !== '') {
+        actualizarBusqueda(false);
+      }
     });
 
-    editor.on("inputRead", function(cm, change) {
-      if (change.text[0].match(/[a-zA-Z_]/)) { cm.showHint({completeSingle: false}); }
+    editor.on("inputRead", (cm, change) => {
+      if (change.text[0].match(/[a-zA-Z_]/)) cm.showHint({completeSingle: false});
     });
 
     editor.on("cursorActivity", () => {
@@ -436,7 +528,79 @@
       document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
     });
 
-    // Control del menú lateral
+    // --- MOTOR DE BÚSQUEDA ---
+    const buscadorInput = document.getElementById('buscadorInput');
+    const badgeCoincidencias = document.getElementById('badgeCoincidencias');
+    let listaMarcadores = [];
+    let coincidencias = [];
+    let indiceActual = -1;
+    let queryPrevio = "";
+
+    function limpiarMarcadores() {
+      listaMarcadores.forEach(m => m.clear());
+      listaMarcadores = [];
+      coincidencias = [];
+      indiceActual = -1;
+      badgeCoincidencias.style.display = 'none';
+    }
+
+    function actualizarBusqueda(avanzar = true) {
+      const query = buscadorInput.value;
+      if (!query) {
+        limpiarMarcadores();
+        queryPrevio = "";
+        return;
+      }
+
+      // Si cambió el texto buscado, recalcular todas las coincidencias
+      if (query !== queryPrevio) {
+        limpiarMarcadores();
+        queryPrevio = query;
+
+        let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
+        while (cursor.findNext()) {
+          coincidencias.push({from: cursor.from(), to: cursor.to()});
+          listaMarcadores.push(editor.markText(cursor.from(), cursor.to(), {className: "cm-searching"}));
+        }
+
+        indiceActual = coincidencias.length > 0 ? 0 : -1;
+      } else if (avanzar && coincidencias.length > 0) {
+        indiceActual = (indiceActual + 1) % coincidencias.length;
+      }
+
+      if (coincidencias.length > 0) {
+        badgeCoincidencias.style.display = 'inline-block';
+        badgeCoincidencias.textContent = `[${indiceActual + 1}/${coincidencias.length}]`;
+
+        const match = coincidencias[indiceActual];
+        editor.setSelection(match.from, match.to);
+        editor.scrollIntoView({from: match.from, to: match.to}, 100);
+      } else {
+        badgeCoincidencias.style.display = 'inline-block';
+        badgeCoincidencias.textContent = `0/0`;
+      }
+    }
+
+    buscadorInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        actualizarBusqueda(true);
+      }
+    });
+
+    buscadorInput.addEventListener('input', () => {
+      actualizarBusqueda(false);
+    });
+
+    // Asignador táctil y de clics seguro
+    function bindAccion(id, fn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
+      el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
+    }
+
+    // Control Sidebar
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('overlay');
@@ -450,10 +614,10 @@
       contenedor.innerHTML = '';
 
       carpetasCreadas.forEach(carpeta => {
-        const itemCarpeta = document.createElement('div');
-        itemCarpeta.className = 'tree-folder';
-        itemCarpeta.innerHTML = `📁 ${carpeta}`;
-        contenedor.appendChild(itemCarpeta);
+        const div = document.createElement('div');
+        div.className = 'tree-folder';
+        div.innerHTML = `📁 ${carpeta}`;
+        contenedor.appendChild(div);
       });
 
       for (const ruta in sistemaArchivos) {
@@ -462,11 +626,15 @@
         item.className = `tree-file ${esSub ? 'tree-file-sub' : ''} ${ruta === archivoActual ? 'activo' : ''}`;
         
         item.innerHTML = `
-          <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" onclick="abrirArchivo('${ruta}')">
-            📄 ${ruta}
-          </span>
-          <span class="btn-delete-file" onclick="event.stopPropagation(); eliminarArchivo('${ruta}')">🗑</span>
+          <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${ruta}</span>
+          <span class="btn-delete-file">🗑</span>
         `;
+
+        item.querySelector('span:first-child').addEventListener('click', () => abrirArchivo(ruta));
+        item.querySelector('.btn-delete-file').addEventListener('click', (e) => {
+          e.stopPropagation();
+          eliminarArchivo(ruta);
+        });
         contenedor.appendChild(item);
       }
     }
@@ -475,32 +643,25 @@
       archivoActual = ruta;
       localStorage.setItem('py_archivo_activo', ruta);
       editor.setValue(sistemaArchivos[ruta]);
-      actualizarVistasEncabezado();
+      document.getElementById('pestanaArchivo').textContent = `</> ${ruta}`;
+      limpiarMarcadores();
+      buscadorInput.value = "";
       toggleSidebar();
     }
 
-    function actualizarVistasEncabezado() {
-      document.getElementById('pestanaArchivo').textContent = `</> ${archivoActual}`;
-      document.getElementById('nombreEnBuscador').value = archivoActual;
-    }
-
     function crearArchivoPrompt() {
-      let nombre = prompt("Nombre del archivo (ej: script.py o carpeta/script.py):");
+      let nombre = prompt("Nombre del archivo (ej: datos.py o modulo/datos.py):");
       if (!nombre) return;
       if (!nombre.endsWith('.py')) nombre += '.py';
+      if (sistemaArchivos[nombre]) return alert("Ya existe un archivo con ese nombre.");
 
-      if (sistemaArchivos[nombre]) {
-        alert("Ya existe un archivo con ese nombre.");
-        return;
-      }
-
-      sistemaArchivos[nombre] = "# Nuevo script Python\n";
+      sistemaArchivos[nombre] = "# Nuevo script\n";
       localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
       abrirArchivo(nombre);
     }
 
     function crearCarpetaPrompt() {
-      const nombre = prompt("Nombre de la nueva carpeta:");
+      const nombre = prompt("Nombre de la carpeta:");
       if (!nombre) return;
       if (!carpetasCreadas.includes(nombre)) {
         carpetasCreadas.push(nombre);
@@ -510,30 +671,40 @@
     }
 
     function eliminarArchivo(ruta) {
-      const total = Object.keys(sistemaArchivos).length;
-      if (total <= 1) {
-        alert("Debes tener al menos un archivo.");
-        return;
-      }
-
-      if (confirm(`¿Seguro que deseas eliminar ${ruta}?`)) {
+      if (Object.keys(sistemaArchivos).length <= 1) return alert("Debes conservar al menos un archivo.");
+      if (confirm(`¿Eliminar ${ruta}?`)) {
         delete sistemaArchivos[ruta];
         localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
         if (archivoActual === ruta) {
-          archivoActual = Object.keys(sistemaArchivos)[0];
-          abrirArchivo(archivoActual);
+          abrirArchivo(Object.keys(sistemaArchivos)[0]);
         } else {
           renderizarArchivos();
         }
       }
     }
 
-    // Terminal
-    function enfocarInput() {
-      const inputTerminal = document.querySelector('.terminal-input');
-      if (inputTerminal) inputTerminal.focus();
+    // Modal de Diagnóstico y Estado
+    function abrirModalDiagnostico() {
+      const modal = document.getElementById('modalListo');
+      const info = document.getElementById('infoDiagnostico');
+      const totalArchivos = Object.keys(sistemaArchivos).length;
+      const lineas = editor.lineCount();
+
+      info.innerHTML = `
+        • <strong>Motor:</strong> Skulpt (Python 3.x Navegador)<br>
+        • <strong>Archivo en uso:</strong> ${archivoActual}<br>
+        • <strong>Líneas:</strong> ${lineas}<br>
+        • <strong>Archivos en memoria:</strong> ${totalArchivos}<br>
+        • <strong>Modo offline:</strong> ${navigator.onLine ? 'Conectado (PWA Lista)' : 'Activo (Sin conexión)'}
+      `;
+      modal.classList.add('activo');
     }
 
+    function cerrarModalDiagnostico() {
+      document.getElementById('modalListo').classList.remove('activo');
+    }
+
+    // Terminal y Ejecución
     function toggleConsola() {
       const seccion = document.getElementById('seccionConsola');
       const flecha = document.getElementById('flechaConsola');
@@ -542,24 +713,11 @@
       setTimeout(() => editor.refresh(), 260);
     }
 
-    function limpiarConsola() {
-      salidaConsola.innerHTML = "";
-    }
-
-    function leerArchivo(archivo) {
-      if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][archivo] === undefined) {
-        throw "Archivo no encontrado: '" + archivo + "'";
-      }
-      return Sk.builtinFiles["files"][archivo];
-    }
-
     function ejecutarCodigo() {
       const seccion = document.getElementById('seccionConsola');
-      const flecha = document.getElementById('flechaConsola');
-      
       if (seccion.classList.contains('oculta')) {
         seccion.classList.remove('oculta');
-        flecha.textContent = '🔽';
+        document.getElementById('flechaConsola').textContent = '🔽';
         setTimeout(() => editor.refresh(), 260);
       }
 
@@ -567,50 +725,64 @@
       let codigo = editor.getValue();
 
       Sk.configure({
-        output: function(texto) {
-          salidaConsola.appendChild(document.createTextNode(texto));
+        output: (t) => {
+          salidaConsola.appendChild(document.createTextNode(t));
           salidaConsola.scrollTop = salidaConsola.scrollHeight;
         },
-        read: leerArchivo,
+        read: (x) => {
+          if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) throw "Archivo no encontrado: '" + x + "'";
+          return Sk.builtinFiles["files"][x];
+        },
         inputfunTakesPrompt: true,
-        inputfun: function(promptText) {
+        inputfun: (promptText) => {
           return new Promise((resolve) => {
             salidaConsola.appendChild(document.createTextNode(promptText));
-            
-            let campoInput = document.createElement("input");
-            campoInput.type = "text";
-            campoInput.className = "terminal-input";
-            campoInput.setAttribute("autocomplete", "off");
-            campoInput.setAttribute("autocorrect", "off");
-            campoInput.setAttribute("autocapitalize", "off");
-            campoInput.setAttribute("spellcheck", "false");
-            
-            salidaConsola.appendChild(campoInput);
-            campoInput.focus();
+            let input = document.createElement("input");
+            input.type = "text";
+            input.className = "terminal-input";
+            input.setAttribute("autocomplete", "off");
+            salidaConsola.appendChild(input);
+            input.focus();
             salidaConsola.scrollTop = salidaConsola.scrollHeight;
 
-            campoInput.addEventListener("keydown", function(e) {
+            input.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
-                let valor = campoInput.value;
-                campoInput.remove();
-                salidaConsola.appendChild(document.createTextNode(valor + "\n"));
-                resolve(valor);
+                let val = input.value;
+                input.remove();
+                salidaConsola.appendChild(document.createTextNode(val + "\n"));
+                resolve(val);
               }
             });
           });
         }
       });
 
-      Sk.misceval.asyncToPromise(function() {
-        return Sk.importMainWithBody("<stdin>", false, codigo, true);
-      }).catch(function(err) {
-        let errorSpan = document.createElement("span");
-        errorSpan.style.color = "#FF5198";
-        errorSpan.textContent = "\n[Error] " + err.toString() + "\n";
-        salidaConsola.appendChild(errorSpan);
-        salidaConsola.scrollTop = salidaConsola.scrollHeight;
-      });
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigo, true))
+        .catch((err) => {
+          let errSpan = document.createElement("span");
+          errSpan.style.color = "#FF5198";
+          errSpan.textContent = "\n[Error] " + err.toString() + "\n";
+          salidaConsola.appendChild(errSpan);
+          salidaConsola.scrollTop = salidaConsola.scrollHeight;
+        });
     }
+
+    // Vincular Eventos
+    bindAccion('btnCarpeta', toggleSidebar);
+    bindAccion('btnCerrarSidebar', toggleSidebar);
+    bindAccion('overlay', toggleSidebar);
+    bindAccion('btnCrearArchivo', crearArchivoPrompt);
+    bindAccion('btnCrearCarpeta', crearCarpetaPrompt);
+    bindAccion('btnEjecutar', ejecutarCodigo);
+    bindAccion('flechaConsola', toggleConsola);
+    bindAccion('btnLimpiarConsola', () => salidaConsola.innerHTML = "");
+    bindAccion('estadoMotor', abrirModalDiagnostico);
+    bindAccion('estadoInferior', abrirModalDiagnostico);
+    bindAccion('btnCerrarModal', cerrarModalDiagnostico);
+    bindAccion('btnReiniciarMotor', () => {
+      salidaConsola.innerHTML = "Motor Python reiniciado.\n";
+      cerrarModalDiagnostico();
+    });
   </script>
 </body>
 </html>

@@ -1,2075 +1,1829 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Python Móvil - Prettier Theme</title>
-  
-  <link rel="icon" type="image/png" href="icono.png">
-  <link rel="apple-touch-icon" href="icono.png">
-  <link rel="manifest" href="manifest.json">
-  
-  <!-- CodeMirror -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.css">
-  
-  <!-- Skulpt -->
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
-  
-  <!-- Scripts CodeMirror -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/anyword-hint.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      position: fixed;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-      overscroll-behavior: none;
-      background-color: #111B21;
-      color: #E0E2E4;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    .app-wrapper {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .top-toolbar {
-      flex-shrink: 0;
-      background-color: #16242D;
-      display: flex;
-      align-items: center;
-      padding: 10px 14px;
-      gap: 8px;
-      border-bottom: 1px solid #1A2B34;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      color: #5C7482;
-      font-size: 19px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-    }
-    .icon-btn:active { color: #FF5198; }
-
-    .search-pill {
-      background-color: #1A2B34;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      padding: 4px 10px;
-      flex: 1;
-      gap: 6px;
-      color: #5C7482;
-      border: 1px solid transparent;
-      transition: border-color 0.2s;
-    }
-    .search-pill:focus-within {
-      border-color: #FF5198;
-      background-color: #131E25;
-    }
-
-    .search-pill input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #E0E2E4;
-      width: 100%;
-      font-size: 13px;
-      font-family: monospace;
-    }
-
-    .search-badge {
-      font-size: 11px;
-      color: #28C0A9;
-      font-family: monospace;
-      white-space: nowrap;
-      padding: 2px 4px;
-      border-radius: 4px;
-      background: #111B21;
-      display: none;
-    }
-
-    .btn-replace-toggle {
-      font-size: 11px;
-      color: #3CA9E2;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 2px 4px;
-    }
-
-    .replace-bar {
-      display: none;
-      background-color: #131E25;
-      padding: 6px 14px;
-      gap: 8px;
-      border-bottom: 1px solid #1A2B34;
-      align-items: center;
-    }
-    .replace-bar.activa { display: flex; }
-    .replace-bar input {
-      background: #1A2B34;
-      border: 1px solid #233642;
-      border-radius: 6px;
-      padding: 4px 8px;
-      color: #E0E2E4;
-      font-family: monospace;
-      font-size: 12px;
-      flex: 1;
-      outline: none;
-    }
-    .replace-bar button {
-      background: #1A2B34;
-      border: 1px solid #3CA9E2;
-      color: #3CA9E2;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
-    .btn-ejecutar-play {
-      background-color: #FF5198;
-      color: white;
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(255, 81, 152, 0.4);
-      flex-shrink: 0;
-    }
-    .btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
-
-    /* Pestañas */
-    .tab-bar {
-      flex-shrink: 0;
-      background-color: #111B21;
-      display: flex;
-      align-items: center;
-      overflow-x: auto;
-      border-bottom: 1px solid #1A2B34;
-      -webkit-overflow-scrolling: touch;
-    }
-    .tab-bar::-webkit-scrollbar { display: none; }
-
-    .tab {
-      background-color: #16242D;
-      color: #8198a5;
-      padding: 8px 14px;
-      font-family: monospace;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-right: 1px solid #111B21;
-      border-top: 2px solid transparent;
-      cursor: pointer;
-      white-space: nowrap;
-      user-select: none;
-    }
-
-    .tab.activa {
-      background-color: #1A2B34;
-      color: #3CA9E2;
-      border-top: 2px solid #FF5198;
-    }
-
-    .tab .btn-cerrar-tab {
-      font-size: 11px;
-      color: #5C7482;
-      padding: 2px 4px;
-      border-radius: 4px;
-    }
-    .tab .btn-cerrar-tab:hover {
-      color: #FF5198;
-      background-color: rgba(255, 81, 152, 0.1);
-    }
-
-    .btn-nueva-pestana {
-      background: none;
-      border: none;
-      color: #3CA9E2;
-      font-size: 16px;
-      padding: 6px 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .btn-nueva-pestana:active { color: #FF5198; }
-
-    .editor-container {
-      flex: 1;
-      position: relative;
-      background-color: #1A2B34;
-      overflow: hidden;
-      touch-action: pan-y;
-    }
-
-    .CodeMirror {
-      height: 100% !important;
-      position: absolute !important;
-      top: 0; bottom: 0; left: 0; right: 0;
-      font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
-      font-size: 14px;
-    }
-
-    .cm-searching {
-      background-color: rgba(255, 81, 152, 0.35) !important;
-      border-bottom: 2px solid #FF5198;
-    }
-
-    /* Prettier Theme */
-    .cm-s-prettier.CodeMirror { background: #1A2B34; color: #E0E2E4; }
-    .cm-s-prettier .CodeMirror-gutters { background: #1A2B34; border-right: 1px solid #233642; }
-    .cm-s-prettier .CodeMirror-linenumber { color: #5C7482; }
-    .cm-s-prettier .CodeMirror-cursor { border-left: 2px solid #FF5198; }
-    .cm-s-prettier span.cm-keyword { color: #FF5198; font-weight: bold; }
-    .cm-s-prettier span.cm-string { color: #28C0A9; }
-    .cm-s-prettier span.cm-number { color: #E09873; }
-    .cm-s-prettier span.cm-def { color: #3CA9E2; }
-    .cm-s-prettier span.cm-variable { color: #E0E2E4; }
-    .cm-s-prettier span.cm-variable-2 { color: #33CCFF; }
-    .cm-s-prettier span.cm-comment { color: #697A85; font-style: italic; }
-    .cm-s-prettier span.cm-operator { color: #FF5198; }
-    .cm-s-prettier span.cm-builtin { color: #3CA9E2; }
-
-    /* Barra de Símbolos Rápidos */
-    .symbols-bar {
-      flex-shrink: 0;
-      background-color: #16242D;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 8px;
-      border-top: 1px solid #1A2B34;
-      border-bottom: 1px solid #111B21;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      user-select: none;
-    }
-    .symbols-bar::-webkit-scrollbar { display: none; }
-
-    .sym-btn {
-      background-color: #1A2B34;
-      border: 1px solid #233642;
-      color: #3CA9E2;
-      border-radius: 6px;
-      font-family: 'SF Mono', Menlo, monospace;
-      font-size: 13px;
-      font-weight: 600;
-      min-width: 32px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 8px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-    .sym-btn:active {
-      background-color: #FF5198;
-      color: white;
-      border-color: #FF5198;
-      transform: scale(0.95);
-    }
-    .sym-btn.nav { color: #E09873; }
-    .sym-btn.action { color: #28C0A9; font-size: 12px; }
-    .sym-btn.kw { color: #FF5198; font-size: 12px; }
-
-    .console-section {
-      flex-shrink: 0;
-      height: 44%;
-      background-color: #0B1216;
-      border-top: 1px solid #233642;
-      display: flex;
-      flex-direction: column;
-      transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .console-section.oculta { height: 38px; }
-
-    .console-header {
-      flex-shrink: 0;
-      height: 38px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 14px;
-      font-size: 12px;
-      color: #5C7482;
-      border-bottom: 1px solid #111B21;
-      user-select: none;
-    }
-
-    .console-modes {
-      display: flex;
-      gap: 4px;
-      background: #111B21;
-      padding: 2px;
-      border-radius: 6px;
-    }
-    .console-mode-btn {
-      background: none;
-      border: none;
-      color: #8198a5;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .console-mode-btn.activo {
-      background: #1A2B34;
-      color: #3CA9E2;
-      font-weight: bold;
-    }
-
-    .console-body {
-      flex: 1;
-      padding: 10px 14px;
-      font-family: 'SF Mono', Menlo, monospace;
-      font-size: 13px;
-      color: #E0E2E4;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      -webkit-overflow-scrolling: touch;
-      cursor: text;
-    }
-
-    .console-bench {
-      font-size: 10px;
-      color: #28C0A9;
-      margin-top: 6px;
-      border-top: 1px dashed #233642;
-      padding-top: 4px;
-      display: block;
-    }
-
-    .console-error-tag {
-      color: #FF5198;
-      cursor: pointer;
-      text-decoration: underline;
-      font-weight: bold;
-    }
-
-    .repl-input-container {
-      display: none;
-      align-items: center;
-      padding: 6px 12px;
-      background-color: #111B21;
-      border-top: 1px solid #1A2B34;
-    }
-    .repl-input-container.activo { display: flex; }
-    .repl-prompt-symbol {
-      color: #FF5198;
-      font-weight: bold;
-      font-family: monospace;
-      margin-right: 6px;
-    }
-    .repl-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #28C0A9;
-      font-family: monospace;
-      font-size: 13px;
-    }
-
-    .bottom-bar {
-      flex-shrink: 0;
-      height: 28px;
-      background-color: #111B21;
-      padding: 0 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #3CA9E2;
-      font-family: monospace;
-      border-top: 1px solid #1A2B34;
-    }
-
-    .terminal-input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #28C0A9;
-      font-family: monospace;
-      font-size: 13px;
-      width: 140px;
-      margin-left: 2px;
-    }
-
-    .sidebar-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 9998;
-      display: none;
-      backdrop-filter: blur(2px);
-    }
-    .sidebar-overlay.activo { display: block; }
-
-    .sidebar {
-      position: fixed;
-      top: 0; left: -300px; width: 290px; height: 100vh;
-      background-color: #111B21;
-      border-right: 1px solid #1A2B34;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.25s ease-out;
-    }
-    .sidebar.abierto { transform: translateX(300px); }
-
-    .sidebar-header {
-      padding: 16px 14px;
-      font-size: 13px;
-      font-weight: bold;
-      color: #8198a5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #1A2B34;
-      background-color: #16242D;
-    }
-
-    .sidebar-actions {
-      display: flex;
-      gap: 6px;
-      padding: 10px 14px;
-      background-color: #111B21;
-      border-bottom: 1px solid #1A2B34;
-    }
-
-    .sidebar-btn {
-      flex: 1;
-      background: #1A2B34;
-      color: #E0E2E4;
-      border: 1px solid #233642;
-      padding: 8px 4px;
-      border-radius: 6px;
-      font-size: 11px;
-      cursor: pointer;
-      font-weight: 500;
-      text-align: center;
-    }
-    .sidebar-btn:active { background: #FF5198; color: white; }
-
-    .sidebar-backup-actions {
-      display: flex;
-      gap: 6px;
-      padding: 8px 14px;
-      background-color: #131E25;
-      border-bottom: 1px solid #1A2B34;
-    }
-
-    .file-tree {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .tree-folder, .tree-file {
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    .tree-folder {
-      font-size: 13px;
-      color: #FF5198;
-      font-weight: bold;
-      padding: 8px 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-radius: 6px;
-      margin-top: 4px;
-      cursor: pointer;
-      background: rgba(22, 36, 45, 0.5);
-    }
-    .tree-folder:active { background: #16242D; }
-
-    .tree-folder-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .folder-arrow {
-      font-size: 11px;
-      color: #3CA9E2;
-      width: 14px;
-      display: inline-block;
-      text-align: center;
-    }
-
-    .folder-children {
-      margin-left: 10px;
-      padding-left: 6px;
-      border-left: 1px dashed #233642;
-      display: flex;
-      flex-direction: column;
-    }
-    .folder-children.colapsado { display: none; }
-
-    .tree-file {
-      font-size: 13px;
-      color: #E0E2E4;
-      padding: 9px 10px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      margin: 2px 0;
-      background: #16242D;
-    }
-    .tree-file:active { background-color: #233642; }
-
-    .tree-file.activo {
-      background-color: #1A2B34;
-      color: #3CA9E2;
-      border-left: 3px solid #FF5198;
-    }
-
-    .tree-file-sub { background: #131E25; font-size: 12px; }
-    .tree-empty-folder { font-size: 11px; color: #5C7482; padding: 6px 10px; font-style: italic; }
-
-    /* Modales */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 10000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-overlay.activo { display: flex; }
-
-    .modal-box {
-      background-color: #16242D;
-      border: 1px solid #1A2B34;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 340px;
-      padding: 18px;
-      color: #E0E2E4;
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-    .modal-box h3 {
-      font-size: 15px;
-      color: #28C0A9;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .modal-input-group label {
-      font-size: 12px;
-      color: #8198a5;
-    }
-    .modal-input-group input, .modal-input-group select {
-      background: #111B21;
-      border: 1px solid #233642;
-      color: #E0E2E4;
-      padding: 8px 10px;
-      border-radius: 6px;
-      outline: none;
-      font-family: monospace;
-      font-size: 13px;
-    }
-    .modal-input-group input:focus, .modal-input-group select:focus {
-      border-color: #FF5198;
-    }
-
-    .modal-btn-group {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .modal-btn {
-      flex: 1;
-      background: #FF5198;
-      border: none;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: center;
-    }
-    .modal-btn.secondary {
-      background: #1A2B34;
-      border: 1px solid #233642;
-      color: #3CA9E2;
-    }
-    .modal-btn:active { opacity: 0.85; }
-
-    /* Menú Contextual */
-    .context-menu-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .context-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #111B21;
-      border: 1px solid #233642;
-      color: #E0E2E4;
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      width: 100%;
-      text-align: left;
-    }
-    .context-btn:active { background: #1A2B34; }
-    .context-btn.danger { color: #FF5198; border-color: rgba(255, 81, 152, 0.3); }
-
-    .snapshot-item {
-      background: #111B21;
-      border: 1px solid #233642;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-    }
-    .snapshot-item button {
-      background: #1A2B34;
-      border: 1px solid #3CA9E2;
-      color: #3CA9E2;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Python Móvil - Prettier Theme</title>
+<link rel="icon" type="image/png" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- CodeMirror 5 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.css">
+<!-- Skulpt Engine -->
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<!-- CodeMirror Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/anyword-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
+<style>
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+-webkit-tap-highlight-color: transparent;
+}
+html, body {
+position: fixed;
+width: 100vw;
+height: 100vh;
+height: 100dvh;
+overflow: hidden;
+overscroll-behavior: none;
+background-color: #111B21;
+color: #E0E2E4;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.app-wrapper {
+display: flex;
+flex-direction: column;
+width: 100%;
+height: 100%;
+overflow: hidden;
+position: relative;
+}
+.top-toolbar {
+flex-shrink: 0;
+background-color: #16242D;
+display: flex;
+align-items: center;
+padding: 10px 14px;
+gap: 8px;
+border-bottom: 1px solid #1A2B34;
+}
+.icon-btn {
+background: none;
+border: none;
+color: #5C7482;
+font-size: 19px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 4px;
+}
+.icon-btn:active { color: #FF5198; }
+.search-pill {
+background-color: #1A2B34;
+border-radius: 20px;
+display: flex;
+align-items: center;
+padding: 4px 10px;
+flex: 1;
+gap: 6px;
+color: #5C7482;
+border: 1px solid transparent;
+transition: border-color 0.2s;
+}
+.search-pill:focus-within {
+border-color: #FF5198;
+background-color: #131E25;
+}
+.search-pill input {
+background: transparent;
+border: none;
+outline: none;
+color: #E0E2E4;
+width: 100%;
+font-size: 13px;
+font-family: monospace;
+}
+.search-badge {
+font-size: 11px;
+color: #28C0A9;
+font-family: monospace;
+white-space: nowrap;
+padding: 2px 4px;
+border-radius: 4px;
+background: #111B21;
+display: none;
+}
+.btn-replace-toggle {
+font-size: 11px;
+color: #3CA9E2;
+background: none;
+border: none;
+cursor: pointer;
+padding: 2px 4px;
+}
+.replace-bar {
+display: none;
+background-color: #131E25;
+padding: 6px 14px;
+gap: 8px;
+border-bottom: 1px solid #1A2B34;
+align-items: center;
+}
+.replace-bar.activa { display: flex; }
+.replace-bar input {
+background: #1A2B34;
+border: 1px solid #233642;
+border-radius: 6px;
+padding: 4px 8px;
+color: #E0E2E4;
+font-family: monospace;
+font-size: 12px;
+flex: 1;
+outline: none;
+}
+.replace-bar button {
+background: #1A2B34;
+border: 1px solid #3CA9E2;
+color: #3CA9E2;
+border-radius: 6px;
+padding: 4px 8px;
+font-size: 11px;
+cursor: pointer;
+}
+.btn-ejecutar-play {
+background-color: #FF5198;
+color: white;
+border: none;
+width: 36px;
+height: 36px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+box-shadow: 0 2px 8px rgba(255, 81, 152, 0.4);
+flex-shrink: 0;
+}
+.btn-ejecutar-play:active { transform: scale(0.92); background-color: #E03E7E; }
+/* Pestañas */
+.tab-bar {
+flex-shrink: 0;
+background-color: #111B21;
+display: flex;
+align-items: center;
+overflow-x: auto;
+border-bottom: 1px solid #1A2B34;
+-webkit-overflow-scrolling: touch;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab {
+background-color: #16242D;
+color: #8198a5;
+padding: 8px 14px;
+font-family: monospace;
+font-size: 12px;
+display: flex;
+align-items: center;
+gap: 8px;
+border-right: 1px solid #111B21;
+border-top: 2px solid transparent;
+cursor: pointer;
+white-space: nowrap;
+user-select: none;
+}
+.tab.activa {
+background-color: #1A2B34;
+color: #3CA9E2;
+border-top: 2px solid #FF5198;
+}
+.tab .btn-cerrar-tab {
+font-size: 11px;
+color: #5C7482;
+padding: 2px 4px;
+border-radius: 4px;
+}
+.tab .btn-cerrar-tab:hover {
+color: #FF5198;
+background-color: rgba(255, 81, 152, 0.1);
+}
+.btn-nueva-pestana {
+background: none;
+border: none;
+color: #3CA9E2;
+font-size: 16px;
+padding: 6px 12px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+}
+.btn-nueva-pestana:active { color: #FF5198; }
+.editor-container {
+flex: 1;
+position: relative;
+background-color: #1A2B34;
+overflow: hidden;
+touch-action: pan-y;
+}
+.CodeMirror {
+height: 100% !important;
+position: absolute !important;
+top: 0; bottom: 0; left: 0; right: 0;
+font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+font-size: 14px;
+}
+.cm-searching {
+background-color: rgba(255, 81, 152, 0.35) !important;
+border-bottom: 2px solid #FF5198;
+}
+/* Prettier Theme */
+.cm-s-prettier.CodeMirror { background: #1A2B34; color: #E0E2E4; }
+.cm-s-prettier .CodeMirror-gutters { background: #1A2B34; border-right: 1px solid #233642; }
+.cm-s-prettier .CodeMirror-linenumber { color: #5C7482; }
+.cm-s-prettier .CodeMirror-cursor { border-left: 2px solid #FF5198; }
+.cm-s-prettier span.cm-keyword { color: #FF5198; font-weight: bold; }
+.cm-s-prettier span.cm-string { color: #28C0A9; }
+.cm-s-prettier span.cm-number { color: #E09873; }
+.cm-s-prettier span.cm-def { color: #3CA9E2; }
+.cm-s-prettier span.cm-variable { color: #E0E2E4; }
+.cm-s-prettier span.cm-variable-2 { color: #33CCFF; }
+.cm-s-prettier span.cm-comment { color: #697A85; font-style: italic; }
+.cm-s-prettier span.cm-operator { color: #FF5198; }
+.cm-s-prettier span.cm-builtin { color: #3CA9E2; }
+/* Barra de Símbolos Rápidos */
+.symbols-bar {
+flex-shrink: 0;
+background-color: #16242D;
+display: flex;
+align-items: center;
+gap: 5px;
+padding: 6px 8px;
+border-top: 1px solid #1A2B34;
+border-bottom: 1px solid #111B21;
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+user-select: none;
+}
+.symbols-bar::-webkit-scrollbar { display: none; }
+.sym-btn {
+background-color: #1A2B34;
+border: 1px solid #233642;
+color: #3CA9E2;
+border-radius: 6px;
+font-family: 'SF Mono', Menlo, monospace;
+font-size: 13px;
+font-weight: 600;
+min-width: 32px;
+height: 30px;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 0 8px;
+flex-shrink: 0;
+cursor: pointer;
+}
+.sym-btn:active {
+background-color: #FF5198;
+color: white;
+border-color: #FF5198;
+transform: scale(0.95);
+}
+.sym-btn.nav { color: #E09873; }
+.sym-btn.action { color: #28C0A9; font-size: 12px; }
+.sym-btn.kw { color: #FF5198; font-size: 12px; }
+.console-section {
+flex-shrink: 0;
+height: 44%;
+background-color: #0B1216;
+border-top: 1px solid #233642;
+display: flex;
+flex-direction: column;
+transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.console-section.oculta { height: 38px; }
+.console-header {
+flex-shrink: 0;
+height: 38px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0 14px;
+font-size: 12px;
+color: #5C7482;
+border-bottom: 1px solid #111B21;
+user-select: none;
+}
+.console-modes {
+display: flex;
+gap: 4px;
+background: #111B21;
+padding: 2px;
+border-radius: 6px;
+}
+.console-mode-btn {
+background: none;
+border: none;
+color: #8198a5;
+font-size: 11px;
+padding: 2px 8px;
+border-radius: 4px;
+cursor: pointer;
+}
+.console-mode-btn.activo {
+background: #1A2B34;
+color: #3CA9E2;
+font-weight: bold;
+}
+.console-body {
+flex: 1;
+padding: 10px 14px;
+font-family: 'SF Mono', Menlo, monospace;
+font-size: 13px;
+color: #E0E2E4;
+overflow-y: auto;
+white-space: pre-wrap;
+-webkit-overflow-scrolling: touch;
+cursor: text;
+}
+.console-bench {
+font-size: 10px;
+color: #28C0A9;
+margin-top: 6px;
+border-top: 1px dashed #233642;
+padding-top: 4px;
+display: block;
+}
+.console-error-tag {
+color: #FF5198;
+cursor: pointer;
+text-decoration: underline;
+font-weight: bold;
+}
+.repl-input-container {
+display: none;
+align-items: center;
+padding: 6px 12px;
+background-color: #111B21;
+border-top: 1px solid #1A2B34;
+}
+.repl-input-container.activo { display: flex; }
+.repl-prompt-symbol {
+color: #FF5198;
+font-weight: bold;
+font-family: monospace;
+margin-right: 6px;
+}
+.repl-input {
+flex: 1;
+background: transparent;
+border: none;
+outline: none;
+color: #28C0A9;
+font-family: monospace;
+font-size: 13px;
+}
+.bottom-bar {
+flex-shrink: 0;
+height: 28px;
+background-color: #111B21;
+padding: 0 14px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 11px;
+color: #3CA9E2;
+font-family: monospace;
+border-top: 1px solid #1A2B34;
+}
+.terminal-input {
+background: transparent;
+border: none;
+outline: none;
+color: #28C0A9;
+font-family: monospace;
+font-size: 13px;
+width: 140px;
+margin-left: 2px;
+}
+.sidebar-overlay {
+position: fixed;
+top: 0; left: 0; width: 100vw; height: 100vh;
+background: rgba(0, 0, 0, 0.7);
+z-index: 9998;
+display: none;
+backdrop-filter: blur(2px);
+}
+.sidebar-overlay.activo { display: block; }
+.sidebar {
+position: fixed;
+top: 0; left: -300px; width: 290px; height: 100vh;
+background-color: #111B21;
+border-right: 1px solid #1A2B34;
+z-index: 9999;
+display: flex;
+flex-direction: column;
+transition: transform 0.25s ease-out;
+}
+.sidebar.abierto { transform: translateX(300px); }
+.sidebar-header {
+padding: 16px 14px;
+font-size: 13px;
+font-weight: bold;
+color: #8198a5;
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 1px solid #1A2B34;
+background-color: #16242D;
+}
+.sidebar-actions {
+display: flex;
+gap: 6px;
+padding: 10px 14px;
+background-color: #111B21;
+border-bottom: 1px solid #1A2B34;
+}
+.sidebar-btn {
+flex: 1;
+background: #1A2B34;
+color: #E0E2E4;
+border: 1px solid #233642;
+padding: 8px 4px;
+border-radius: 6px;
+font-size: 11px;
+cursor: pointer;
+font-weight: 500;
+text-align: center;
+}
+.sidebar-btn:active { background: #FF5198; color: white; }
+.sidebar-backup-actions {
+display: flex;
+gap: 6px;
+padding: 8px 14px;
+background-color: #131E25;
+border-bottom: 1px solid #1A2B34;
+}
+.file-tree {
+flex: 1;
+overflow-y: auto;
+padding: 12px;
+-webkit-overflow-scrolling: touch;
+}
+.tree-folder, .tree-file {
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
+}
+.tree-folder {
+font-size: 13px;
+color: #FF5198;
+font-weight: bold;
+padding: 8px 6px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+border-radius: 6px;
+margin-top: 4px;
+cursor: pointer;
+background: rgba(22, 36, 45, 0.5);
+}
+.tree-folder:active { background: #16242D; }
+.tree-folder-left {
+display: flex;
+align-items: center;
+gap: 6px;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+.folder-arrow {
+font-size: 11px;
+color: #3CA9E2;
+width: 14px;
+display: inline-block;
+text-align: center;
+}
+.folder-children {
+margin-left: 10px;
+padding-left: 6px;
+border-left: 1px dashed #233642;
+display: flex;
+flex-direction: column;
+}
+.folder-children.colapsado { display: none; }
+.tree-file {
+font-size: 13px;
+color: #E0E2E4;
+padding: 9px 10px;
+border-radius: 6px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+cursor: pointer;
+margin: 2px 0;
+background: #16242D;
+}
+.tree-file:active { background-color: #233642; }
+.tree-file.activo {
+background-color: #1A2B34;
+color: #3CA9E2;
+border-left: 3px solid #FF5198;
+}
+.tree-file-sub { background: #131E25; font-size: 12px; }
+.tree-empty-folder { font-size: 11px; color: #5C7482; padding: 6px 10px; font-style: italic; }
+/* Modales */
+.modal-overlay {
+position: fixed;
+top: 0; left: 0; width: 100vw; height: 100vh;
+background: rgba(0, 0, 0, 0.7);
+z-index: 10000;
+display: none;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+.modal-overlay.activo { display: flex; }
+.modal-box {
+background-color: #16242D;
+border: 1px solid #1A2B34;
+border-radius: 12px;
+width: 100%;
+max-width: 340px;
+padding: 18px;
+color: #E0E2E4;
+max-height: 85vh;
+overflow-y: auto;
+}
+.modal-box h3 {
+font-size: 15px;
+color: #28C0A9;
+margin-bottom: 12px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.modal-input-group {
+display: flex;
+flex-direction: column;
+gap: 6px;
+margin-bottom: 12px;
+}
+.modal-input-group label {
+font-size: 12px;
+color: #8198a5;
+}
+.modal-input-group input, .modal-input-group select {
+background: #111B21;
+border: 1px solid #233642;
+color: #E0E2E4;
+padding: 8px 10px;
+border-radius: 6px;
+outline: none;
+font-family: monospace;
+font-size: 13px;
+}
+.modal-input-group input:focus, .modal-input-group select:focus {
+border-color: #FF5198;
+}
+.modal-btn-group {
+display: flex;
+gap: 8px;
+margin-top: 10px;
+}
+.modal-btn {
+flex: 1;
+background: #FF5198;
+border: none;
+color: white;
+padding: 10px;
+border-radius: 8px;
+font-weight: bold;
+font-size: 13px;
+cursor: pointer;
+text-align: center;
+}
+.modal-btn.secondary {
+background: #1A2B34;
+border: 1px solid #233642;
+color: #3CA9E2;
+}
+.modal-btn:active { opacity: 0.85; }
+/* Menú Contextual */
+.context-menu-actions {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-top: 10px;
+}
+.context-btn {
+display: flex;
+align-items: center;
+gap: 10px;
+background: #111B21;
+border: 1px solid #233642;
+color: #E0E2E4;
+padding: 12px 14px;
+border-radius: 8px;
+font-size: 13px;
+cursor: pointer;
+width: 100%;
+text-align: left;
+}
+.context-btn:active { background: #1A2B34; }
+.context-btn.danger { color: #FF5198; border-color: rgba(255, 81, 152, 0.3); }
+.snapshot-item {
+background: #111B21;
+border: 1px solid #233642;
+border-radius: 6px;
+padding: 8px 10px;
+margin-bottom: 8px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+font-size: 12px;
+}
+.snapshot-item button {
+background: #1A2B34;
+border: 1px solid #3CA9E2;
+color: #3CA9E2;
+padding: 4px 8px;
+border-radius: 4px;
+font-size: 11px;
+cursor: pointer;
+}
+</style>
 </head>
 <body>
-
-  <input type="file" id="inputSubirArchivos" multiple accept=".py,.json,.txt,.csv" style="display:none;">
-
-  <!-- Overlay y Sidebar -->
-  <div class="sidebar-overlay" id="overlay"></div>
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <span>EXPLORADOR DE ARCHIVOS</span>
-      <span id="btnCerrarSidebar" style="cursor: pointer; font-size: 16px; padding: 4px;">✕</span>
-    </div>
-    <div class="sidebar-actions">
-      <button class="sidebar-btn" id="btnAbrirModalArchivo">📄 + Archivo</button>
-      <button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
-    </div>
-    <div class="sidebar-backup-actions">
-      <button class="sidebar-btn" id="btnSubirArchivo" title="Subir archivo">📂 Importar</button>
-      <button class="sidebar-btn" id="btnExportarWorkspace" title="Descargar copia">💾 Backup</button>
-    </div>
-    <div class="file-tree" id="listaArchivos"></div>
-  </aside>
-
-  <!-- Modal Crear Archivo -->
-  <div class="modal-overlay" id="modalCrearArchivo">
-    <div class="modal-box">
-      <h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <div class="modal-input-group">
-        <label>Nombre del archivo:</label>
-        <input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py o datos.txt" autocomplete="off">
-      </div>
-      <div class="modal-input-group">
-        <label>Guardar en carpeta:</label>
-        <select id="selectorCarpetaDestino">
-          <option value="">/ (Raíz)</option>
-        </select>
-      </div>
-      <div class="modal-btn-group">
-        <button class="modal-btn secondary" id="btnSoloCrear">Crear</button>
-        <button class="modal-btn" id="btnCrearYAbrir">Abrir</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Abrir Pestaña (+) -->
-  <div class="modal-overlay" id="modalAbrirPestana">
-    <div class="modal-box">
-      <h3>Abrir Archivo en Pestaña <span id="btnCerrarModalPestana" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <div class="modal-input-group">
-        <label>Selecciona la carpeta:</label>
-        <select id="selectorCarpetaPestana">
-          <option value="TODAS">📁 Todas las ubicaciones</option>
-          <option value="">/ (Raíz)</option>
-        </select>
-      </div>
-      <div class="modal-input-group">
-        <label>Selecciona el archivo:</label>
-        <select id="selectorArchivoPestana"></select>
-      </div>
-      <button class="modal-btn" id="btnConfirmarAbrirPestana">Abrir</button>
-    </div>
-  </div>
-
-  <!-- Modal Menú Contextual (Long Press) -->
-  <div class="modal-overlay" id="modalContextual">
-    <div class="modal-box">
-      <h3 id="contextualTitulo">Opciones <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <p id="contextualSubtitulo" style="font-size: 12px; color: #8198a5; margin-bottom: 12px; word-break: break-all;"></p>
-      <div class="context-menu-actions">
-        <button class="context-btn" id="btnCtxCompartir">📤 Compartir / Exportar</button>
-        <button class="context-btn" id="btnCtxDescargar">⬇️ Descargar archivo</button>
-        <button class="context-btn danger" id="btnCtxEliminar">🗑 Eliminar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Snapshots (🔀) -->
-  <div class="modal-overlay" id="modalSnapshots">
-    <div class="modal-box">
-      <h3>Historial de Versiones <span id="btnCerrarSnapshots" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <p style="font-size:12px; color:#8198a5; margin-bottom:12px;">Snapshots guardados para el archivo actual:</p>
-      <button class="modal-btn secondary" id="btnCrearSnapshotManual" style="margin-bottom:12px; width:100%;">📸 Guardar Versión Actual</button>
-      <div id="listaSnapshots" style="max-height:200px; overflow-y:auto;"></div>
-    </div>
-  </div>
-
-  <!-- Modal Ajustes (•••) -->
-  <div class="modal-overlay" id="modalAjustes">
-    <div class="modal-box">
-      <h3>Configuración del Editor <span id="btnCerrarAjustes" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <div class="modal-input-group">
-        <label>Tamaño de Fuente:</label>
-        <select id="cfgTamanoFuente">
-          <option value="12px">12px (Compacto)</option>
-          <option value="14px">14px (Estándar)</option>
-          <option value="16px">16px (Grande)</option>
-          <option value="18px">18px (Muy Grande)</option>
-        </select>
-      </div>
-      <div class="modal-input-group">
-        <label>Espacios de Tabulación:</label>
-        <select id="cfgTabSize">
-          <option value="4">4 Espacios (Recomendado)</option>
-          <option value="2">2 Espacios</option>
-        </select>
-      </div>
-      <div class="modal-input-group">
-        <label>Ajuste de Línea (Word Wrap):</label>
-        <select id="cfgLineWrapping">
-          <option value="true">Activado (Sin scroll horizontal)</option>
-          <option value="false">Desactivado</option>
-        </select>
-      </div>
-      <button class="modal-btn" id="btnGuardarAjustes">Aplicar Ajustes</button>
-    </div>
-  </div>
-
-  <!-- Modal Diagnóstico / Listo -->
-  <div class="modal-overlay" id="modalListo">
-    <div class="modal-box">
-      <h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
-      <div class="modal-info" id="infoDiagnostico" style="font-size:13px; line-height:1.6; color:#9ba1b0; margin-bottom:14px;"></div>
-      <button class="modal-btn" id="btnReiniciarMotor" style="width:100%;">🔄 Reiniciar Motor y Variables</button>
-    </div>
-  </div>
-
-  <div class="app-wrapper">
-    <header class="top-toolbar">
-      <button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
-      <button class="icon-btn" id="btnRamas" title="Historial">🔀</button>
-      
-      <div class="search-pill">
-        <span>🔍</span>
-        <input type="text" id="buscadorInput" placeholder="Buscar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        <span class="search-badge" id="badgeCoincidencias">0/0</span>
-        <button class="btn-replace-toggle" id="btnToggleReplace" title="Reemplazar">⇄</button>
-      </div>
-
-      <button class="btn-ejecutar-play" id="btnEjecutar" title="Ejecutar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <button class="icon-btn" id="btnOpciones" title="Ajustes">•••</button>
-    </header>
-
-    <!-- Barra de Reemplazo -->
-    <div class="replace-bar" id="barraReemplazo">
-      <input type="text" id="inputReemplazo" placeholder="Reemplazar por..." autocomplete="off">
-      <button id="btnReemplazarUno">Uno</button>
-      <button id="btnReemplazarTodo">Todo</button>
-    </div>
-
-    <!-- Pestañas múltiples -->
-    <div class="tab-bar" id="contenedorPestanas"></div>
-
-    <div class="editor-container" id="editorWrap">
-      <textarea id="codigo"></textarea>
-    </div>
-
-    <!-- Barra de símbolos rápidos para teclado móvil -->
-    <div class="symbols-bar" id="barraSimbolos">
-      <button class="sym-btn nav" data-sym="NAV_LEFT" title="Cursor Izquierda">◀</button>
-      <button class="sym-btn nav" data-sym="NAV_RIGHT" title="Cursor Derecha">▶</button>
-      <button class="sym-btn action" data-sym="UNDO" title="Deshacer">↶</button>
-      <button class="sym-btn action" data-sym="REDO" title="Rehacer">↷</button>
-      <button class="sym-btn action" data-sym="TAB" title="Tabular">Tab</button>
-      <button class="sym-btn" data-sym=":">:</button>
-      <button class="sym-btn" data-sym="=">=</button>
-      <button class="sym-btn" data-sym="()">()</button>
-      <button class="sym-btn" data-sym="[]">[]</button>
-      <button class="sym-btn" data-sym="{}">{}</button>
-      <button class="sym-btn" data-sym='""'>""</button>
-      <button class="sym-btn" data-sym="''">''</button>
-      <button class="sym-btn" data-sym="_">_</button>
-      <button class="sym-btn" data-sym="#">#</button>
-      <button class="sym-btn" data-sym="+">+</button>
-      <button class="sym-btn" data-sym="-">-</button>
-      <button class="sym-btn" data-sym="*">*</button>
-      <button class="sym-btn" data-sym="/">/</button>
-      <button class="sym-btn" data-sym=">">&gt;</button>
-      <button class="sym-btn" data-sym="<">&lt;</button>
-      <button class="sym-btn" data-sym="==">==</button>
-      <button class="sym-btn" data-sym="!=">!=</button>
-      <button class="sym-btn kw" data-sym="def ">def</button>
-      <button class="sym-btn kw" data-sym="return ">return</button>
-      <button class="sym-btn kw" data-sym="print()">print</button>
-    </div>
-
-    <!-- Terminal & REPL -->
-    <section class="console-section" id="seccionConsola">
-      <div class="console-header">
-        <div class="console-modes">
-          <button class="console-mode-btn activo" id="btnModoSalida">📄 Salida</button>
-          <button class="console-mode-btn" id="btnModoRepl">💻 REPL</button>
-        </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <span id="estadoMotor" style="color: #28C0A9; font-size: 11px; cursor: pointer;">Listo ⚙️</span>
-          <span id="btnLimpiarConsola" style="cursor: pointer; font-size: 14px;" title="Limpiar">🗑</span>
-          <span id="flechaConsola" style="cursor: pointer; font-size: 14px; padding: 4px;" title="Ocultar / Mostrar">🔽</span>
-        </div>
-      </div>
-      
-      <div class="console-body" id="salidaConsola"></div>
-
-      <!-- Input para modo REPL -->
-      <div class="repl-input-container" id="contenedorReplInput">
-        <span class="repl-prompt-symbol">&gt;&gt;&gt;</span>
-        <input type="text" class="repl-input" id="replInput" placeholder="Escribe código Python..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      </div>
-      
-      <div class="bottom-bar">
-        <span id="posicionCursor">&lt;/&gt; Python Lín 1, Col 1</span>
-        <span id="estadoInferior" style="cursor: pointer; color: #28C0A9;">Listo</span>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
-
-    // Persistencia Local
-    let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
-      "prueba.py": "# Demostración de Hardware iOS y Archivos Virtuales\nimport ios\nimport modulos.operaciones as op\n\n# Probar vibración y hardware\nios.vibrate(60)\nprint('Batería:', ios.get_battery())\n\n# Escritura de archivos locales con open()\nwith open('datos.txt', 'w') as f:\n    f.write('Guardado desde Python!')\n\nprint('5 + 3 =', op.sumar(5, 3))\nprint('Archivo datos.txt creado con éxito.')",
-      "modulos/operaciones.py": "def sumar(a, b):\n    return a + b\n\ndef restar(a, b):\n    return a - b"
-    };
-    let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
-    let carpetasEstado = JSON.parse(localStorage.getItem('py_carpetas_estado')) || {};
-    let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "modulos/operaciones.py"];
-    let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
-    let configuracionEditor = JSON.parse(localStorage.getItem('py_config')) || {
-      fontSize: "14px",
-      tabSize: 4,
-      lineWrapping: true
-    };
-
-    if (!sistemaArchivos[archivoActual]) archivoActual = Object.keys(sistemaArchivos)[0] || "prueba.py";
-    pestanasAbiertas = pestanasAbiertas.filter(p => sistemaArchivos[p]);
-    if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
-
-    const salidaConsola = document.getElementById("salidaConsola");
-    let modoConsolaActual = "salida";
-    let historialRepl = [];
-    let indiceHistorialRepl = -1;
-
-    // Inicializar CodeMirror
-    const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
-      mode: "python", 
-      theme: "prettier", 
-      lineNumbers: true, 
-      lineWrapping: configuracionEditor.lineWrapping, 
-      tabSize: configuracionEditor.tabSize,
-      indentUnit: configuracionEditor.tabSize,
-      autoCloseBrackets: true,
-      inputStyle: "contenteditable",
-      extraKeys: {
-        "Ctrl-Space": "autocomplete",
-        "Cmd-Enter": () => ejecutarCodigo(),
-        "Ctrl-Enter": () => ejecutarCodigo()
-      }
-    });
-
-    editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
-    editor.setValue(sistemaArchivos[archivoActual] || "");
-
-    editor.on("change", () => {
-      if (archivoActual) {
-        sistemaArchivos[archivoActual] = editor.getValue();
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-      }
-      if (document.getElementById('buscadorInput').value.trim() !== '') {
-        actualizarBusqueda(false);
-      }
-    });
-
-    editor.on("inputRead", (cm, change) => {
-      if (change.text[0].match(/[a-zA-Z_]/)) cm.showHint({completeSingle: false});
-    });
-
-    editor.on("cursorActivity", () => {
-      const pos = editor.getCursor();
-      document.getElementById("posicionCursor").textContent = `</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}`;
-    });
-
-    // --- BARRA DE SÍMBOLOS RÁPIDOS Y NAVEGACIÓN ---
-    function insertarSimbolo(sym) {
-      editor.focus();
-      const doc = editor.getDoc();
-      const cursor = doc.getCursor();
-
-      switch(sym) {
-        case 'NAV_LEFT':
-          if (cursor.ch > 0) doc.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
-          else if (cursor.line > 0) {
-            let prevLineLen = editor.getLine(cursor.line - 1).length;
-            doc.setCursor({ line: cursor.line - 1, ch: prevLineLen });
-          }
-          break;
-        case 'NAV_RIGHT':
-          let curLineLen = editor.getLine(cursor.line).length;
-          if (cursor.ch < curLineLen) doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          else if (cursor.line < editor.lineCount() - 1) {
-            doc.setCursor({ line: cursor.line + 1, ch: 0 });
-          }
-          break;
-        case 'TAB':
-          doc.replaceSelection(" ".repeat(configuracionEditor.tabSize || 4));
-          break;
-        case 'UNDO':
-          editor.undo();
-          break;
-        case 'REDO':
-          editor.redo();
-          break;
-        case '()':
-          doc.replaceRange("()", cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          break;
-        case '[]':
-          doc.replaceRange("[]", cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          break;
-        case '{}':
-          doc.replaceRange("{}", cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          break;
-        case '""':
-          doc.replaceRange('""', cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          break;
-        case "''":
-          doc.replaceRange("''", cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
-          break;
-        case 'print()':
-          doc.replaceRange('print()', cursor);
-          doc.setCursor({ line: cursor.line, ch: cursor.ch + 6 });
-          break;
-        default:
-          doc.replaceSelection(sym);
-          break;
-      }
-    }
-
-    document.querySelectorAll('.sym-btn').forEach(btn => {
-      const sym = btn.getAttribute('data-sym');
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        insertarSimbolo(sym);
-      });
-    });
-
-    // --- PESTAÑAS MÚLTIPLES ---
-    function renderizarPestanas() {
-      const contenedor = document.getElementById('contenedorPestanas');
-      contenedor.innerHTML = '';
-
-      pestanasAbiertas.forEach(ruta => {
-        const esActiva = ruta === archivoActual;
-        const div = document.createElement('div');
-        div.className = `tab ${esActiva ? 'activa' : ''}`;
-        
-        div.innerHTML = `
-          <span>&lt;/&gt; ${ruta}</span>
-          <span class="btn-cerrar-tab">✕</span>
-        `;
-
-        div.querySelector('span:first-child').addEventListener('click', () => cambiarPestana(ruta));
-        div.querySelector('.btn-cerrar-tab').addEventListener('click', (e) => {
-          e.stopPropagation();
-          cerrarPestana(ruta);
-        });
-
-        contenedor.appendChild(div);
-      });
-
-      const btnMas = document.createElement('button');
-      btnMas.className = 'btn-nueva-pestana';
-      btnMas.innerHTML = '+';
-      btnMas.title = 'Abrir archivo en pestaña';
-      btnMas.addEventListener('click', abrirModalPestanaNueva);
-      contenedor.appendChild(btnMas);
-
-      localStorage.setItem('py_pestanas', JSON.stringify(pestanasAbiertas));
-    }
-
-    function cambiarPestana(ruta) {
-      if (!sistemaArchivos[ruta]) return;
-      archivoActual = ruta;
-      localStorage.setItem('py_archivo_activo', ruta);
-      editor.setValue(sistemaArchivos[ruta]);
-      renderizarPestanas();
-      limpiarMarcadores();
-    }
-
-    function abrirEnPestana(ruta) {
-      if (!pestanasAbiertas.includes(ruta)) {
-        pestanasAbiertas.push(ruta);
-      }
-      cambiarPestana(ruta);
-    }
-
-    function cerrarPestana(ruta) {
-      pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
-      if (pestanasAbiertas.length === 0) {
-        const primera = Object.keys(sistemaArchivos)[0];
-        if (primera) pestanasAbiertas.push(primera);
-      }
-      if (archivoActual === ruta) {
-        cambiarPestana(pestanasAbiertas[pestanasAbiertas.length - 1]);
-      } else {
-        renderizarPestanas();
-      }
-    }
-
-    // --- MODAL ABRIR PESTAÑA (+) ---
-    function abrirModalPestanaNueva() {
-      const selCarpeta = document.getElementById('selectorCarpetaPestana');
-      selCarpeta.innerHTML = `
-        <option value="TODAS">📁 Todas las ubicaciones</option>
-        <option value="">/ (Raíz)</option>
-      `;
-
-      carpetasCreadas.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = `📁 ${c}`;
-        selCarpeta.appendChild(opt);
-      });
-
-      actualizarSelectorArchivosPestana();
-      document.getElementById('modalAbrirPestana').classList.add('activo');
-    }
-
-    function actualizarSelectorArchivosPestana() {
-      const carpeta = document.getElementById('selectorCarpetaPestana').value;
-      const selArchivo = document.getElementById('selectorArchivoPestana');
-      selArchivo.innerHTML = '';
-
-      let archivosDisponibles = Object.keys(sistemaArchivos);
-
-      if (carpeta !== 'TODAS') {
-        if (carpeta === '') {
-          archivosDisponibles = archivosDisponibles.filter(a => !a.includes('/'));
-        } else {
-          archivosDisponibles = archivosDisponibles.filter(a => a.startsWith(carpeta + '/'));
-        }
-      }
-
-      if (archivosDisponibles.length === 0) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '(Sin archivos en esta carpeta)';
-        selArchivo.appendChild(opt);
-      } else {
-        archivosDisponibles.forEach(a => {
-          const opt = document.createElement('option');
-          opt.value = a;
-          opt.textContent = `📄 ${a}`;
-          selArchivo.appendChild(opt);
-        });
-      }
-    }
-
-    document.getElementById('selectorCarpetaPestana').addEventListener('change', actualizarSelectorArchivosPestana);
-
-    function confirmarAbrirPestana() {
-      const ruta = document.getElementById('selectorArchivoPestana').value;
-      if (!ruta) return alert("Selecciona un archivo válido.");
-      document.getElementById('modalAbrirPestana').classList.remove('activo');
-      abrirEnPestana(ruta);
-    }
-
-    // --- CREACIÓN DE ARCHIVOS ---
-    function abrirModalCrearArchivo() {
-      const selector = document.getElementById('selectorCarpetaDestino');
-      selector.innerHTML = '<option value="">/ (Raíz)</option>';
-      
-      carpetasCreadas.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = `📁 ${c}`;
-        selector.appendChild(opt);
-      });
-
-      document.getElementById('nuevoNombreArchivo').value = '';
-      document.getElementById('modalCrearArchivo').classList.add('activo');
-      toggleSidebar();
-    }
-
-    function procesarCreacionArchivo(abrirAlFinal = false) {
-      let nombre = document.getElementById('nuevoNombreArchivo').value.trim();
-      const carpeta = document.getElementById('selectorCarpetaDestino').value;
-
-      if (!nombre) return alert("Escribe un nombre para el archivo.");
-      if (!nombre.includes('.')) nombre += '.py';
-
-      const rutaCompleta = carpeta ? `${carpeta}/${nombre}` : nombre;
-
-      if (sistemaArchivos[rutaCompleta]) return alert("Ya existe un archivo con ese nombre.");
-
-      sistemaArchivos[rutaCompleta] = nombre.endsWith('.py') ? "# Nuevo script Python\n" : "";
-      localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-      
-      document.getElementById('modalCrearArchivo').classList.remove('activo');
-
-      if (abrirAlFinal) {
-        abrirEnPestana(rutaCompleta);
-      } else {
-        renderizarPestanas();
-        renderizarArchivos();
-        alert(`Archivo "${rutaCompleta}" creado.`);
-      }
-    }
-
-    // --- DETECTOR DE LONG PRESS (500ms) ---
-    function configurarLongPress(elemento, callbackClick, callbackLongPress) {
-      let pressTimer = null;
-      let ejecutoLongPress = false;
-      let startX = 0, startY = 0;
-
-      const inicio = (e) => {
-        ejecutoLongPress = false;
-        if (e.touches && e.touches.length > 0) {
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-        }
-        pressTimer = setTimeout(() => {
-          ejecutoLongPress = true;
-          if (navigator.vibrate) navigator.vibrate(45);
-          callbackLongPress(e);
-        }, 500);
-      };
-
-      const movimiento = (e) => {
-        if (!pressTimer) return;
-        if (e.touches && e.touches.length > 0) {
-          const diffX = Math.abs(e.touches[0].clientX - startX);
-          const diffY = Math.abs(e.touches[0].clientY - startY);
-          if (diffX > 8 || diffY > 8) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-          }
-        }
-      };
-
-      const cancelar = () => {
-        if (pressTimer) {
-          clearTimeout(pressTimer);
-          pressTimer = null;
-        }
-      };
-
-      const fin = (e) => {
-        if (pressTimer) {
-          clearTimeout(pressTimer);
-          pressTimer = null;
-        }
-        if (!ejecutoLongPress && callbackClick) {
-          callbackClick(e);
-        }
-      };
-
-      elemento.addEventListener('touchstart', inicio, { passive: true });
-      elemento.addEventListener('touchmove', movimiento, { passive: true });
-      elemento.addEventListener('touchend', fin);
-      elemento.addEventListener('touchcancel', cancelar);
-
-      elemento.addEventListener('mousedown', (e) => { if (e.button === 0) inicio(e); });
-      elemento.addEventListener('mousemove', movimiento);
-      elemento.addEventListener('mouseup', fin);
-      elemento.addEventListener('mouseleave', cancelar);
-
-      elemento.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-
-    // --- MENÚ CONTEXTUAL ---
-    let elementoContextual = { tipo: '', ruta: '' };
-
-    function abrirMenuContextual(tipo, ruta) {
-      elementoContextual = { tipo, ruta };
-      const titulo = document.getElementById('contextualTitulo');
-      const subtitulo = document.getElementById('contextualSubtitulo');
-      const btnDescargar = document.getElementById('btnCtxDescargar');
-
-      titulo.innerHTML = `${tipo === 'carpeta' ? '📁 Carpeta' : '📄 Archivo'} <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span>`;
-      subtitulo.textContent = ruta;
-      btnDescargar.textContent = tipo === 'carpeta' ? '⬇️ Descargar todo (.json)' : '⬇️ Descargar archivo';
-
-      document.getElementById('modalContextual').classList.add('activo');
-      document.getElementById('btnCerrarContextual').onclick = () => {
-        document.getElementById('modalContextual').classList.remove('activo');
-      };
-    }
-
-    async function ejecutarCompartirContextual() {
-      const { tipo, ruta } = elementoContextual;
-      document.getElementById('modalContextual').classList.remove('activo');
-
-      if (tipo === 'archivo') {
-        const contenido = sistemaArchivos[ruta] || "";
-        if (navigator.share) {
-          try {
-            const nombreArchivo = ruta.split('/').pop();
-            const file = new File([contenido], nombreArchivo, { type: 'text/plain' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({ files: [file], title: nombreArchivo });
-            } else {
-              await navigator.share({ title: nombreArchivo, text: contenido });
-            }
-          } catch (e) {
-            if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
-          }
-        } else {
-          navigator.clipboard.writeText(contenido).then(() => alert("Copiado al portapapeles."));
-        }
-      } else {
-        const archivosCarpeta = {};
-        for (let k in sistemaArchivos) {
-          if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
-        }
-        const dataJson = JSON.stringify(archivosCarpeta, null, 2);
-        if (navigator.share) {
-          try {
-            await navigator.share({ title: `Carpeta ${ruta}`, text: dataJson });
-          } catch (e) {
-            if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
-          }
-        } else {
-          navigator.clipboard.writeText(dataJson).then(() => alert("Copiado al portapapeles en JSON."));
-        }
-      }
-    }
-
-    function ejecutarDescargarContextual() {
-      const { tipo, ruta } = elementoContextual;
-      document.getElementById('modalContextual').classList.remove('activo');
-
-      if (tipo === 'archivo') {
-        const contenido = sistemaArchivos[ruta] || "";
-        const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = ruta.split('/').pop();
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        const archivosCarpeta = {};
-        for (let k in sistemaArchivos) {
-          if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
-        }
-        const blob = new Blob([JSON.stringify(archivosCarpeta, null, 2)], { type: 'application/json;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${ruta}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    }
-
-    function ejecutarEliminarContextual() {
-      const { tipo, ruta } = elementoContextual;
-      document.getElementById('modalContextual').classList.remove('activo');
-      if (tipo === 'archivo') {
-        eliminarArchivo(ruta);
-      } else {
-        eliminarCarpeta(ruta);
-      }
-    }
-
-    // --- EXPLORADOR DE ARCHIVOS ---
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('overlay');
-      const estaAbierto = sidebar.classList.toggle('abierto');
-      overlay.classList.toggle('activo', estaAbierto);
-      if (estaAbierto) renderizarArchivos();
-    }
-
-    function renderizarArchivos() {
-      const contenedor = document.getElementById('listaArchivos');
-      contenedor.innerHTML = '';
-
-      carpetasCreadas.forEach(carpeta => {
-        const estaAbierta = carpetasEstado[carpeta] !== false;
-
-        const folderWrap = document.createElement('div');
-        folderWrap.style.marginBottom = '6px';
-
-        const folderHead = document.createElement('div');
-        folderHead.className = 'tree-folder';
-        folderHead.innerHTML = `
-          <div class="tree-folder-left">
-            <span class="folder-arrow">${estaAbierta ? '▾' : '▸'}</span>
-            <span>📁 ${carpeta}</span>
-          </div>
-          <span style="font-size:10px; color:#5C7482; padding-right:4px;">•••</span>
-        `;
-
-        configurarLongPress(
-          folderHead,
-          () => {
-            carpetasEstado[carpeta] = !estaAbierta;
-            localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
-            renderizarArchivos();
-          },
-          () => {
-            abrirMenuContextual('carpeta', carpeta);
-          }
-        );
-
-        folderWrap.appendChild(folderHead);
-
-        const subFilesContainer = document.createElement('div');
-        subFilesContainer.className = `folder-children ${estaAbierta ? '' : 'colapsado'}`;
-
-        const archivosDeEstaCarpeta = Object.keys(sistemaArchivos).filter(k => k.startsWith(carpeta + '/'));
-
-        if (archivosDeEstaCarpeta.length === 0) {
-          const empty = document.createElement('div');
-          empty.className = 'tree-empty-folder';
-          empty.textContent = '(Carpeta vacía)';
-          subFilesContainer.appendChild(empty);
-        } else {
-          archivosDeEstaCarpeta.forEach(ruta => {
-            const nombreArchivo = ruta.replace(carpeta + '/', '');
-            const fileItem = document.createElement('div');
-            fileItem.className = `tree-file tree-file-sub ${ruta === archivoActual ? 'activo' : ''}`;
-            fileItem.innerHTML = `
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${nombreArchivo}</span>
-            `;
-
-            configurarLongPress(
-              fileItem,
-              () => {
-                abrirEnPestana(ruta);
-                toggleSidebar();
-              },
-              () => {
-                abrirMenuContextual('archivo', ruta);
-              }
-            );
-
-            subFilesContainer.appendChild(fileItem);
-          });
-        }
-
-        folderWrap.appendChild(subFilesContainer);
-        contenedor.appendChild(folderWrap);
-      });
-
-      const archivosRaiz = Object.keys(sistemaArchivos).filter(k => !k.includes('/'));
-      if (archivosRaiz.length > 0) {
-        const rootHeader = document.createElement('div');
-        rootHeader.style.cssText = 'font-size:11px; color:#5C7482; font-weight:bold; margin: 10px 0 4px 6px; text-transform:uppercase;';
-        rootHeader.textContent = 'Raíz';
-        contenedor.appendChild(rootHeader);
-
-        archivosRaiz.forEach(ruta => {
-          const fileItem = document.createElement('div');
-          fileItem.className = `tree-file ${ruta === archivoActual ? 'activo' : ''}`;
-          fileItem.innerHTML = `
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${ruta}</span>
-          `;
-
-          configurarLongPress(
-            fileItem,
-            () => {
-              abrirEnPestana(ruta);
-              toggleSidebar();
-            },
-            () => {
-              abrirMenuContextual('archivo', ruta);
-            }
-          );
-
-          contenedor.appendChild(fileItem);
-        });
-      }
-    }
-
-    function crearCarpetaPrompt() {
-      const nombre = prompt("Nombre de la nueva carpeta:");
-      if (!nombre) return;
-      const nombreLimpio = nombre.replace(/[^\w-]/gi, '').trim();
-      if (!nombreLimpio) return alert("Nombre de carpeta inválido.");
-      if (!carpetasCreadas.includes(nombreLimpio)) {
-        carpetasCreadas.push(nombreLimpio);
-        carpetasEstado[nombreLimpio] = true;
-        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
-        localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
-        renderizarArchivos();
-      }
-    }
-
-    function eliminarArchivo(ruta) {
-      if (Object.keys(sistemaArchivos).length <= 1) return alert("Debes conservar al menos un archivo.");
-      if (confirm(`¿Eliminar ${ruta}?`)) {
-        delete sistemaArchivos[ruta];
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        cerrarPestana(ruta);
-        renderizarArchivos();
-      }
-    }
-
-    function eliminarCarpeta(carpeta) {
-      if (confirm(`¿Eliminar la carpeta "${carpeta}" y todos sus archivos?`)) {
-        carpetasCreadas = carpetasCreadas.filter(c => c !== carpeta);
-        delete carpetasEstado[carpeta];
-        localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
-        localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
-
-        for (let ruta in sistemaArchivos) {
-          if (ruta.startsWith(carpeta + '/')) {
-            delete sistemaArchivos[ruta];
-            pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
-          }
-        }
-
-        if (Object.keys(sistemaArchivos).length === 0) {
-          sistemaArchivos["main.py"] = "# Archivo principal\nprint('Hola Mundo')";
-          pestanasAbiertas = ["main.py"];
-          archivoActual = "main.py";
-        } else if (!sistemaArchivos[archivoActual]) {
-          archivoActual = Object.keys(sistemaArchivos)[0];
-          if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
-        }
-
-        localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-        cambiarPestana(archivoActual);
-        renderizarArchivos();
-      }
-    }
-
-    // --- RESPALDO E IMPORTACIÓN ---
-    function exportarWorkspaceCompleto() {
-      const backupData = {
-        fecha: new Date().toISOString(),
-        sistemaArchivos,
-        carpetasCreadas,
-        pestanasAbiertas
-      };
-      const jsonStr = JSON.stringify(backupData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup_python_movil_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function dispararSelectorSubir() {
-      document.getElementById('inputSubirArchivos').click();
-    }
-
-    document.getElementById('inputSubirArchivos').addEventListener('change', (e) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          const contenido = evt.target.result;
-          
-          if (file.name.endsWith('.json')) {
-            try {
-              const parsed = JSON.parse(contenido);
-              if (parsed.sistemaArchivos) {
-                if (confirm("¿Restaurar este backup completo? Se combinará con tus archivos actuales.")) {
-                  sistemaArchivos = { ...sistemaArchivos, ...parsed.sistemaArchivos };
-                  if (parsed.carpetasCreadas) {
-                    carpetasCreadas = Array.from(new Set([...carpetasCreadas, ...parsed.carpetasCreadas]));
-                  }
-                  localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-                  localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
-                  renderizarPestanas();
-                  renderizarArchivos();
-                  alert("Backup restaurado correctamente.");
-                }
-                return;
-              }
-            } catch (err) {}
-          }
-
-          sistemaArchivos[file.name] = contenido;
-          localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-          abrirEnPestana(file.name);
-          renderizarArchivos();
-          alert(`Archivo "${file.name}" importado.`);
-        };
-        reader.readAsText(file);
-      });
-      e.target.value = '';
-    });
-
-    // --- SNAPSHOTS (🔀) ---
-    function guardarSnapshot(etiqueta = "Auto") {
-      if (!archivoActual) return;
-      const key = `py_snap_${archivoActual}`;
-      let snapshots = JSON.parse(localStorage.getItem(key)) || [];
-      const nuevo = {
-        fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        etiqueta,
-        codigo: editor.getValue()
-      };
-      snapshots.unshift(nuevo);
-      if (snapshots.length > 10) snapshots.pop();
-      localStorage.setItem(key, JSON.stringify(snapshots));
-    }
-
-    function abrirModalSnapshots() {
-      const modal = document.getElementById('modalSnapshots');
-      const contenedor = document.getElementById('listaSnapshots');
-      const key = `py_snap_${archivoActual}`;
-      let snapshots = JSON.parse(localStorage.getItem(key)) || [];
-
-      contenedor.innerHTML = '';
-      if (snapshots.length === 0) {
-        contenedor.innerHTML = '<div style="color:#5C7482; font-size:12px; font-style:italic;">No hay snapshots guardados para este archivo.</div>';
-      } else {
-        snapshots.forEach((s, idx) => {
-          const div = document.createElement('div');
-          div.className = 'snapshot-item';
-          div.innerHTML = `
-            <div>
-              <strong style="color:#3CA9E2;">${s.etiqueta}</strong> 
-              <span style="color:#8198a5; font-size:10px;">(${s.fecha})</span>
-            </div>
-            <button data-idx="${idx}">Restaurar</button>
-          `;
-          div.querySelector('button').onclick = () => {
-            if (confirm("¿Reemplazar el contenido actual con esta versión?")) {
-              editor.setValue(s.codigo);
-              modal.classList.remove('activo');
-            }
-          };
-          contenedor.appendChild(div);
-        });
-      }
-      modal.classList.add('activo');
-    }
-
-    // --- AJUSTES (•••) ---
-    function abrirModalAjustes() {
-      document.getElementById('cfgTamanoFuente').value = configuracionEditor.fontSize || '14px';
-      document.getElementById('cfgTabSize').value = configuracionEditor.tabSize || 4;
-      document.getElementById('cfgLineWrapping').value = String(configuracionEditor.lineWrapping);
-      document.getElementById('modalAjustes').classList.add('activo');
-    }
-
-    function guardarAjustes() {
-      configuracionEditor.fontSize = document.getElementById('cfgTamanoFuente').value;
-      configuracionEditor.tabSize = parseInt(document.getElementById('cfgTabSize').value, 10);
-      configuracionEditor.lineWrapping = document.getElementById('cfgLineWrapping').value === 'true';
-
-      localStorage.setItem('py_config', JSON.stringify(configuracionEditor));
-
-      editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
-      editor.setOption('lineWrapping', configuracionEditor.lineWrapping);
-      editor.setOption('tabSize', configuracionEditor.tabSize);
-      editor.setOption('indentUnit', configuracionEditor.tabSize);
-      editor.refresh();
-
-      document.getElementById('modalAjustes').classList.remove('activo');
-    }
-
-    // --- BUSCADOR Y REEMPLAZO ---
-    const buscadorInput = document.getElementById('buscadorInput');
-    const badgeCoincidencias = document.getElementById('badgeCoincidencias');
-    const barraReemplazo = document.getElementById('barraReemplazo');
-    const inputReemplazo = document.getElementById('inputReemplazo');
-    let listaMarcadores = [];
-    let coincidencias = [];
-    let indiceActual = -1;
-    let queryPrevio = "";
-
-    function limpiarMarcadores() {
-      listaMarcadores.forEach(m => m.clear());
-      listaMarcadores = [];
-      coincidencias = [];
-      indiceActual = -1;
-      badgeCoincidencias.style.display = 'none';
-    }
-
-    function actualizarBusqueda(avanzar = true) {
-      const query = buscadorInput.value;
-      if (!query) {
-        limpiarMarcadores();
-        queryPrevio = "";
-        return;
-      }
-
-      if (query !== queryPrevio) {
-        limpiarMarcadores();
-        queryPrevio = query;
-
-        let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
-        while (cursor.findNext()) {
-          coincidencias.push({from: cursor.from(), to: cursor.to()});
-          listaMarcadores.push(editor.markText(cursor.from(), cursor.to(), {className: "cm-searching"}));
-        }
-
-        indiceActual = coincidencias.length > 0 ? 0 : -1;
-      } else if (avanzar && coincidencias.length > 0) {
-        indiceActual = (indiceActual + 1) % coincidencias.length;
-      }
-
-      if (coincidencias.length > 0) {
-        badgeCoincidencias.style.display = 'inline-block';
-        badgeCoincidencias.textContent = `[${indiceActual + 1}/${coincidencias.length}]`;
-        const match = coincidencias[indiceActual];
-        editor.setSelection(match.from, match.to);
-        editor.scrollIntoView({from: match.from, to: match.to}, 100);
-      } else {
-        badgeCoincidencias.style.display = 'inline-block';
-        badgeCoincidencias.textContent = `0/0`;
-      }
-    }
-
-    buscadorInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        actualizarBusqueda(true);
-      }
-    });
-
-    buscadorInput.addEventListener('input', () => actualizarBusqueda(false));
-
-    document.getElementById('btnToggleReplace').addEventListener('click', () => {
-      barraReemplazo.classList.toggle('activa');
-    });
-
-    document.getElementById('btnReemplazarUno').addEventListener('click', () => {
-      if (indiceActual >= 0 && coincidencias[indiceActual]) {
-        const match = coincidencias[indiceActual];
-        const nuevoTexto = inputReemplazo.value;
-        editor.replaceRange(nuevoTexto, match.from, match.to);
-        actualizarBusqueda(false);
-      }
-    });
-
-    document.getElementById('btnReemplazarTodo').addEventListener('click', () => {
-      const query = buscadorInput.value;
-      const nuevoTexto = inputReemplazo.value;
-      if (!query) return;
-      let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
-      while (cursor.findNext()) {
-        cursor.replace(nuevoTexto);
-      }
-      actualizarBusqueda(false);
-    });
-
-    function bindAccion(id, fn) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('click', (e) => { e.preventDefault(); fn(); });
-      el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
-    }
-
-    function abrirModalDiagnostico() {
-      const modal = document.getElementById('modalListo');
-      const info = document.getElementById('infoDiagnostico');
-      info.innerHTML = `
-        • <strong>Motor:</strong> Skulpt 1.2 (Timeout 6s)<br>
-        • <strong>Módulo iOS:</strong> Habilitado (import ios)<br>
-        • <strong>I/O Virtual:</strong> Habilitado (open/write nativo)<br>
-        • <strong>Archivo en uso:</strong> ${archivoActual}<br>
-        • <strong>Pestañas:</strong> ${pestanasAbiertas.length}<br>
-        • <strong>Archivos totales:</strong> ${Object.keys(sistemaArchivos).length}<br>
-        • <strong>Estado Red:</strong> ${navigator.onLine ? 'Online' : 'Offline (Cache PWA)'}
-      `;
-      modal.classList.add('activo');
-    }
-
-    function toggleConsola() {
-      const seccion = document.getElementById('seccionConsola');
-      const flecha = document.getElementById('flechaConsola');
-      seccion.classList.toggle('oculta');
-      flecha.textContent = seccion.classList.contains('oculta') ? '🔼' : '🔽';
-      setTimeout(() => editor.refresh(), 260);
-    }
-
-    // --- MÓDULOS NATIVOS SKULPT (ios, open VFS) ---
-    function configurarModulosSkulpt() {
-      Sk.execLimit = 6000;
-
-      // Clase Virtual File System pura para Skulpt
-      Sk.builtins = Sk.builtins || {};
-      Sk.builtins.open = new Sk.builtin.func(function(fn, mode) {
-        var filename = Sk.ffi.remapToJs(fn);
-        var m = mode ? Sk.ffi.remapToJs(mode) : 'r';
-
-        var vfsFileObj = {
-          tp$getattr: function(pyName) {
-            var name = pyName.v || pyName;
-            if (name === "read") {
-              return new Sk.builtin.func(function() {
-                var content = sistemaArchivos[filename] !== undefined ? sistemaArchivos[filename] : "";
-                return new Sk.builtin.str(content);
-              });
-            }
-            if (name === "write") {
-              return new Sk.builtin.func(function(data) {
-                var strData = Sk.ffi.remapToJs(data);
-                if (m === 'a' && sistemaArchivos[filename]) {
-                  sistemaArchivos[filename] += strData;
-                } else {
-                  sistemaArchivos[filename] = strData;
-                }
-                localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-                renderizarArchivos();
-                return Sk.builtin.none.none$;
-              });
-            }
-            if (name === "close") {
-              return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
-            }
-            if (name === "__enter__") {
-              return new Sk.builtin.func(function() { return vfsFileObj; });
-            }
-            if (name === "__exit__") {
-              return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
-            }
-            return undefined;
-          }
-        };
-        return vfsFileObj;
-      });
-
-      Sk.configure({
-        output: (t) => {
-          salidaConsola.appendChild(document.createTextNode(t));
-          salidaConsola.scrollTop = salidaConsola.scrollHeight;
-        },
-        read: (x) => {
-          // 1. Módulo puente Hardware iPhone: 'import ios'
-          if (x.includes("ios.js") || x.includes("ios.py") || x === "ios") {
-            return `
-              var $builtinmodule = function (name) {
-                var mod = {__name__: new Sk.builtin.str("ios")};
-                mod.vibrate = new Sk.builtin.func(function(ms) {
-                  var dur = (ms && ms.v !== undefined) ? ms.v : 50;
-                  if (navigator.vibrate) navigator.vibrate(dur);
-                  return Sk.builtin.none.none$;
-                });
-                mod.get_battery = new Sk.builtin.func(function() {
-                  return new Sk.builtin.str("iOS PWA Batería activa");
-                });
-                mod.clipboard_copy = new Sk.builtin.func(function(txt) {
-                  if (txt && txt.v !== undefined) navigator.clipboard.writeText(txt.v);
-                  return Sk.builtin.none.none$;
-                });
-                return mod;
-              };
-            `;
-          }
-
-          // 2. Librería estándar de Skulpt
-          if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"] !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
-            return Sk.builtinFiles["files"][x];
-          }
-
-          // 3. Normalización de rutas y resolución modular local
-          let clean = x.replace(/^src\/lib\//, '').replace(/^\.\//, '');
-          let baseWithoutExt = clean.replace(/\.(js|py)$/, '');
-
-          // Búsqueda directa
-          if (sistemaArchivos[clean] !== undefined) return sistemaArchivos[clean];
-          if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
-          if (sistemaArchivos[baseWithoutExt + '.py'] !== undefined) return sistemaArchivos[baseWithoutExt + '.py'];
-
-          // Soporte automático para paquetes y carpetas (__init__.py)
-          let folderName = baseWithoutExt.replace(/\/__init__$/, '');
-          let esCarpeta = carpetasCreadas.includes(folderName) || Object.keys(sistemaArchivos).some(k => k.startsWith(folderName + '/'));
-          if (esCarpeta) {
-            let initPath = folderName + '/__init__.py';
-            if (sistemaArchivos[initPath] !== undefined) return sistemaArchivos[initPath];
-            return "# Paquete Python virtual\n";
-          }
-
-          // Notación por puntos: 'modulos.operaciones' -> 'modulos/operaciones.py'
-          let rutaConBarras = baseWithoutExt.replace(/\./g, '/') + '.py';
-          if (sistemaArchivos[rutaConBarras] !== undefined) return sistemaArchivos[rutaConBarras];
-
-          // Búsqueda relativa al archivo activo
-          if (archivoActual && archivoActual.includes('/')) {
-            const dir = archivoActual.substring(0, archivoActual.lastIndexOf('/'));
-            let rutaRel = `${dir}/${baseWithoutExt}.py`;
-            if (sistemaArchivos[rutaRel] !== undefined) return sistemaArchivos[rutaRel];
-          }
-
-          throw "No module named " + clean;
-        },
-        inputfunTakesPrompt: true,
-        inputfun: (promptText) => {
-          return new Promise((resolve) => {
-            salidaConsola.appendChild(document.createTextNode(promptText));
-            let input = document.createElement("input");
-            input.type = "text";
-            input.className = "terminal-input";
-            input.setAttribute("autocomplete", "off");
-            salidaConsola.appendChild(input);
-            input.focus();
-            salidaConsola.scrollTop = salidaConsola.scrollHeight;
-
-            input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                let val = input.value;
-                input.remove();
-                salidaConsola.appendChild(document.createTextNode(val + "\n"));
-                resolve(val);
-              }
-            });
-          });
-        }
-      });
-    }
-
-    // --- EJECUTOR PYTHON CON SALTO EXACTO A LÍNEA ---
-    function ejecutarCodigo() {
-      guardarSnapshot("Pre-run");
-
-      const seccion = document.getElementById('seccionConsola');
-      if (seccion.classList.contains('oculta')) {
-        seccion.classList.remove('oculta');
-        document.getElementById('flechaConsola').textContent = '🔽';
-        setTimeout(() => editor.refresh(), 260);
-      }
-
-      salidaConsola.innerHTML = "";
-      configurarModulosSkulpt();
-
-      let codigoPuro = editor.getValue();
-      let tInicio = performance.now();
-
-      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigoPuro, true))
-        .then(() => {
-          let tFin = performance.now();
-          let benchSpan = document.createElement("span");
-          benchSpan.className = "console-bench";
-          benchSpan.textContent = `⏱️ Ejecutado en ${(tFin - tInicio).toFixed(1)} ms`;
-          salidaConsola.appendChild(benchSpan);
-          salidaConsola.scrollTop = salidaConsola.scrollHeight;
-        })
-        .catch((err) => {
-          let errStr = err.toString();
-          let lineMatch = errStr.match(/on line (\d+)/i) || errStr.match(/line (\d+)/i);
-          
-          let errContainer = document.createElement("div");
-          errContainer.style.color = "#FF5198";
-          errContainer.style.marginTop = "4px";
-
-          if (lineMatch && lineMatch[1]) {
-            let numLineaReal = parseInt(lineMatch[1], 10);
-            errContainer.innerHTML = `[Error] ${errStr} <br><span class="console-error-tag">👉 Toca para ir a la Línea ${numLineaReal}</span>`;
-            errContainer.querySelector('.console-error-tag').onclick = () => {
-              editor.focus();
-              editor.setCursor({ line: numLineaReal - 1, ch: 0 });
-              editor.scrollIntoView({ line: numLineaReal - 1, ch: 0 }, 100);
-            };
-          } else {
-            errContainer.textContent = `[Error] ${errStr}`;
-          }
-
-          salidaConsola.appendChild(errContainer);
-          salidaConsola.scrollTop = salidaConsola.scrollHeight;
-        });
-    }
-
-    // --- MODO REPL INTERACTIVO (>>>) ---
-    const btnModoSalida = document.getElementById('btnModoSalida');
-    const btnModoRepl = document.getElementById('btnModoRepl');
-    const contenedorReplInput = document.getElementById('contenedorReplInput');
-    const replInput = document.getElementById('replInput');
-
-    function alternarModoConsola(modo) {
-      modoConsolaActual = modo;
-      if (modo === 'repl') {
-        btnModoRepl.classList.add('activo');
-        btnModoSalida.classList.remove('activo');
-        contenedorReplInput.classList.add('activo');
-        salidaConsola.innerHTML = "Python 3.x REPL Interactivo Móvil\nUsa enter para ejecutar comandos.\n\n";
-        replInput.focus();
-      } else {
-        btnModoSalida.classList.add('activo');
-        btnModoRepl.classList.remove('activo');
-        contenedorReplInput.classList.remove('activo');
-      }
-    }
-
-    btnModoSalida.addEventListener('click', () => alternarModoConsola('salida'));
-    btnModoRepl.addEventListener('click', () => alternarModoConsola('repl'));
-
-    replInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        let linea = replInput.value.trim();
-        if (!linea) return;
-
-        historialRepl.push(linea);
-        indiceHistorialRepl = historialRepl.length;
-
-        salidaConsola.appendChild(document.createTextNode(`>>> ${linea}\n`));
-        replInput.value = '';
-
-        configurarModulosSkulpt();
-        let wrapCode = `try:\n    __r = eval(${JSON.stringify(linea)})\n    if __r is not None: print(__r)\nexcept:\n    exec(${JSON.stringify(linea)})\n`;
-
-        Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, wrapCode, true))
-          .catch((err) => {
-            let errSpan = document.createElement("span");
-            errSpan.style.color = "#FF5198";
-            errSpan.textContent = err.toString() + "\n";
-            salidaConsola.appendChild(errSpan);
-          })
-          .finally(() => {
-            salidaConsola.scrollTop = salidaConsola.scrollHeight;
-          });
-      }
-    });
-
-    // Bindings de Eventos Generales
-    bindAccion('btnCarpeta', toggleSidebar);
-    bindAccion('btnCerrarSidebar', toggleSidebar);
-    bindAccion('overlay', toggleSidebar);
-    bindAccion('btnAbrirModalArchivo', abrirModalCrearArchivo);
-    bindAccion('btnCerrarModalArchivo', () => document.getElementById('modalCrearArchivo').classList.remove('activo'));
-    bindAccion('btnSoloCrear', () => procesarCreacionArchivo(false));
-    bindAccion('btnCrearYAbrir', () => procesarCreacionArchivo(true));
-    bindAccion('btnCrearCarpeta', crearCarpetaPrompt);
-    bindAccion('btnSubirArchivo', dispararSelectorSubir);
-    bindAccion('btnExportarWorkspace', exportarWorkspaceCompleto);
-    bindAccion('btnCerrarModalPestana', () => document.getElementById('modalAbrirPestana').classList.remove('activo'));
-    bindAccion('btnConfirmarAbrirPestana', confirmarAbrirPestana);
-    bindAccion('btnEjecutar', ejecutarCodigo);
-    bindAccion('flechaConsola', toggleConsola);
-    bindAccion('btnLimpiarConsola', () => salidaConsola.innerHTML = "");
-    bindAccion('estadoMotor', abrirModalDiagnostico);
-    bindAccion('estadoInferior', abrirModalDiagnostico);
-    bindAccion('btnCerrarModal', () => document.getElementById('modalListo').classList.remove('activo'));
-    bindAccion('btnReiniciarMotor', () => {
-      salidaConsola.innerHTML = "Motor Python reiniciado.\n";
-      document.getElementById('modalListo').classList.remove('activo');
-    });
-
-    // Snapshots y Ajustes
-    bindAccion('btnRamas', abrirModalSnapshots);
-    bindAccion('btnCerrarSnapshots', () => document.getElementById('modalSnapshots').classList.remove('activo'));
-    bindAccion('btnCrearSnapshotManual', () => {
-      guardarSnapshot("Manual");
-      abrirModalSnapshots();
-    });
-    bindAccion('btnOpciones', abrirModalAjustes);
-    bindAccion('btnCerrarAjustes', () => document.getElementById('modalAjustes').classList.remove('activo'));
-    bindAccion('btnGuardarAjustes', guardarAjustes);
-
-    // Menú Contextual
-    bindAccion('btnCtxCompartir', ejecutarCompartirContextual);
-    bindAccion('btnCtxDescargar', ejecutarDescargarContextual);
-    bindAccion('btnCtxEliminar', ejecutarEliminarContextual);
-
-    renderizarPestanas();
-  </script>
+<input type="file" id="inputSubirArchivos" multiple accept=".py,.json,.txt,.csv" style="display:none;">
+<!-- Overlay y Sidebar -->
+<div class="sidebar-overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<span>EXPLORADOR DE ARCHIVOS</span>
+<span id="btnCerrarSidebar" style="cursor: pointer; font-size: 16px; padding: 4px;">✕</span>
+</div>
+<div class="sidebar-actions">
+<button class="sidebar-btn" id="btnAbrirModalArchivo">📄 + Archivo</button>
+<button class="sidebar-btn" id="btnCrearCarpeta">📁 + Carpeta</button>
+</div>
+<div class="sidebar-backup-actions">
+<button class="sidebar-btn" id="btnSubirArchivo" title="Subir archivo">📂 Importar</button>
+<button class="sidebar-btn" id="btnExportarWorkspace" title="Descargar copia">💾 Backup</button>
+</div>
+<div class="file-tree" id="listaArchivos"></div>
+</aside>
+<!-- Modal Crear Archivo -->
+<div class="modal-overlay" id="modalCrearArchivo">
+<div class="modal-box">
+<h3>Crear Archivo <span id="btnCerrarModalArchivo" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<div class="modal-input-group">
+<label>Nombre del archivo:</label>
+<input type="text" id="nuevoNombreArchivo" placeholder="ej: script.py o datos.txt" autocomplete="off">
+</div>
+<div class="modal-input-group">
+<label>Guardar en carpeta:</label>
+<select id="selectorCarpetaDestino">
+<option value="">/ (Raíz)</option>
+</select>
+</div>
+<div class="modal-btn-group">
+<button class="modal-btn secondary" id="btnSoloCrear">Crear</button>
+<button class="modal-btn" id="btnCrearYAbrir">Abrir</button>
+</div>
+</div>
+</div>
+<!-- Modal Abrir Pestaña (+) -->
+<div class="modal-overlay" id="modalAbrirPestana">
+<div class="modal-box">
+<h3>Abrir Archivo en Pestaña <span id="btnCerrarModalPestana" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<div class="modal-input-group">
+<label>Selecciona la carpeta:</label>
+<select id="selectorCarpetaPestana">
+<option value="TODAS">📁 Todas las ubicaciones</option>
+<option value="">/ (Raíz)</option>
+</select>
+</div>
+<div class="modal-input-group">
+<label>Selecciona el archivo:</label>
+<select id="selectorArchivoPestana"></select>
+</div>
+<button class="modal-btn" id="btnConfirmarAbrirPestana">Abrir</button>
+</div>
+</div>
+<!-- Modal Menú Contextual (Long Press) -->
+<div class="modal-overlay" id="modalContextual">
+<div class="modal-box">
+<h3 id="contextualTitulo">Opciones <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<p id="contextualSubtitulo" style="font-size: 12px; color: #8198a5; margin-bottom: 12px; word-break: break-all;"></p>
+<div class="context-menu-actions">
+<button class="context-btn" id="btnCtxCompartir">📤 Compartir / Exportar</button>
+<button class="context-btn" id="btnCtxDescargar">⬇️ Descargar archivo</button>
+<button class="context-btn danger" id="btnCtxEliminar">🗑 Eliminar</button>
+</div>
+</div>
+</div>
+<!-- Modal Snapshots (🔀) -->
+<div class="modal-overlay" id="modalSnapshots">
+<div class="modal-box">
+<h3>Historial de Versiones <span id="btnCerrarSnapshots" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<p style="font-size:12px; color:#8198a5; margin-bottom:12px;">Snapshots guardados para el archivo actual:</p>
+<button class="modal-btn secondary" id="btnCrearSnapshotManual" style="margin-bottom:12px; width:100%;">📸 Guardar Versión Actual</button>
+<div id="listaSnapshots" style="max-height:200px; overflow-y:auto;"></div>
+</div>
+</div>
+<!-- Modal Ajustes (•••) -->
+<div class="modal-overlay" id="modalAjustes">
+<div class="modal-box">
+<h3>Configuración del Editor <span id="btnCerrarAjustes" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<div class="modal-input-group">
+<label>Tamaño de Fuente:</label>
+<select id="cfgTamanoFuente">
+<option value="12px">12px (Compacto)</option>
+<option value="14px">14px (Estándar)</option>
+<option value="16px">16px (Grande)</option>
+<option value="18px">18px (Muy Grande)</option>
+</select>
+</div>
+<div class="modal-input-group">
+<label>Espacios de Tabulación:</label>
+<select id="cfgTabSize">
+<option value="4">4 Espacios (Recomendado)</option>
+<option value="2">2 Espacios</option>
+</select>
+</div>
+<div class="modal-input-group">
+<label>Ajuste de Línea (Word Wrap):</label>
+<select id="cfgLineWrapping">
+<option value="true">Activado (Sin scroll horizontal)</option>
+<option value="false">Desactivado</option>
+</select>
+</div>
+<button class="modal-btn" id="btnGuardarAjustes">Aplicar Ajustes</button>
+</div>
+</div>
+<!-- Modal Diagnóstico / Listo -->
+<div class="modal-overlay" id="modalListo">
+<div class="modal-box">
+<h3>Estado del Entorno <span id="btnCerrarModal" style="cursor:pointer; color:#FF5198;">✕</span></h3>
+<div class="modal-info" id="infoDiagnostico" style="font-size:13px; line-height:1.6; color:#9ba1b0; margin-bottom:14px;"></div>
+<button class="modal-btn" id="btnReiniciarMotor" style="width:100%;">🔄 Reiniciar Motor y Variables</button>
+</div>
+</div>
+<div class="app-wrapper">
+<header class="top-toolbar">
+<button class="icon-btn" id="btnCarpeta" title="Ver Archivos">📁</button>
+<button class="icon-btn" id="btnRamas" title="Historial">🔀</button>
+<div class="search-pill">
+<span>🔍</span>
+<input type="text" id="buscadorInput" placeholder="Buscar..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+<span class="search-badge" id="badgeCoincidencias">0/0</span>
+<button class="btn-replace-toggle" id="btnToggleReplace" title="Reemplazar">⇄</button>
+</div>
+<button class="btn-ejecutar-play" id="btnEjecutar" title="Ejecutar">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+</button>
+<button class="icon-btn" id="btnOpciones" title="Ajustes">•••</button>
+</header>
+<!-- Barra de Reemplazo -->
+<div class="replace-bar" id="barraReemplazo">
+<input type="text" id="inputReemplazo" placeholder="Reemplazar por..." autocomplete="off">
+<button id="btnReemplazarUno">Uno</button>
+<button id="btnReemplazarTodo">Todo</button>
+</div>
+<!-- Pestañas múltiples -->
+<div class="tab-bar" id="contenedorPestanas"></div>
+<div class="editor-container" id="editorWrap">
+<textarea id="codigo"></textarea>
+</div>
+<!-- Barra de símbolos rápidos para teclado móvil -->
+<div class="symbols-bar" id="barraSimbolos">
+<button class="sym-btn nav" data-sym="NAV_LEFT" title="Cursor Izquierda">◀</button>
+<button class="sym-btn nav" data-sym="NAV_RIGHT" title="Cursor Derecha">▶</button>
+<button class="sym-btn action" data-sym="UNDO" title="Deshacer">↶</button>
+<button class="sym-btn action" data-sym="REDO" title="Rehacer">↷</button>
+<button class="sym-btn action" data-sym="TAB" title="Tabular">Tab</button>
+<button class="sym-btn" data-sym=":">:</button>
+<button class="sym-btn" data-sym="=">=</button>
+<button class="sym-btn" data-sym="()">()</button>
+<button class="sym-btn" data-sym="[]">[]</button>
+<button class="sym-btn" data-sym="{}">{}</button>
+<button class="sym-btn" data-sym='""'>""</button>
+<button class="sym-btn" data-sym="''">''</button>
+<button class="sym-btn" data-sym="_">_</button>
+<button class="sym-btn" data-sym="#">#</button>
+<button class="sym-btn" data-sym="+">+</button>
+<button class="sym-btn" data-sym="-">-</button>
+<button class="sym-btn" data-sym="*">*</button>
+<button class="sym-btn" data-sym="/">/</button>
+<button class="sym-btn" data-sym=">">></button>
+<button class="sym-btn" data-sym="<"><</button>
+<button class="sym-btn" data-sym="==">==</button>
+<button class="sym-btn" data-sym="!=">!=</button>
+<button class="sym-btn kw" data-sym="def ">def</button>
+<button class="sym-btn kw" data-sym="return ">return</button>
+<button class="sym-btn kw" data-sym="print()">print</button>
+</div>
+<!-- Terminal & REPL -->
+<section class="console-section" id="seccionConsola">
+<div class="console-header">
+<div class="console-modes">
+<button class="console-mode-btn activo" id="btnModoSalida">📄 Salida</button>
+<button class="console-mode-btn" id="btnModoRepl">💻 REPL</button>
+</div>
+<div style="display: flex; gap: 12px; align-items: center;">
+<span id="estadoMotor" style="color: #28C0A9; font-size: 11px; cursor: pointer;">Listo ⚙️</span>
+<span id="btnLimpiarConsola" style="cursor: pointer; font-size: 14px;" title="Limpiar">🗑</span>
+<span id="flechaConsola" style="cursor: pointer; font-size: 14px; padding: 4px;" title="Ocultar / Mostrar">🔽</span>
+</div>
+</div>
+<div class="console-body" id="salidaConsola"></div>
+<!-- Input para modo REPL -->
+<div class="repl-input-container" id="contenedorReplInput">
+<span class="repl-prompt-symbol">>>></span>
+<input type="text" class="repl-input" id="replInput" placeholder="Escribe código Python..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+</div>
+<div class="bottom-bar">
+<span id="posicionCursor"></> Python Lín 1, Col 1</span>
+<span id="estadoInferior" style="cursor: pointer; color: #28C0A9;">Listo</span>
+</div>
+</section>
+</div>
+<script>
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+// Persistencia Local
+let sistemaArchivos = JSON.parse(localStorage.getItem('py_archivos')) || {
+"prueba.py": "# Demostración de Hardware iOS y Archivos Virtuales\nimport ios\nimport modulos.operaciones as op\n\n# Probar vibración y hardware\nios.vibrate(60)\nprint('Batería:', ios.get_battery())\n\n# Escritura de archivos locales con open()\nwith open('datos.txt', 'w') as f:\n    f.write('Guardado desde Python!')\n\nprint('5 + 3 =', op.sumar(5, 3))\nprint('Archivo datos.txt creado con éxito.')",
+"modulos/operaciones.py": "def sumar(a, b):\n    return a + b\n\ndef restar(a, b):\n    return a - b"
+};
+let carpetasCreadas = JSON.parse(localStorage.getItem('py_carpetas')) || ["modulos"];
+let carpetasEstado = JSON.parse(localStorage.getItem('py_carpetas_estado')) || {};
+let pestanasAbiertas = JSON.parse(localStorage.getItem('py_pestanas')) || ["prueba.py", "modulos/operaciones.py"];
+let archivoActual = localStorage.getItem('py_archivo_activo') || "prueba.py";
+let configuracionEditor = JSON.parse(localStorage.getItem('py_config')) || {
+fontSize: "14px",
+tabSize: 4,
+lineWrapping: true
+};
+if (!sistemaArchivos[archivoActual]) archivoActual = Object.keys(sistemaArchivos)[0] || "prueba.py";
+pestanasAbiertas = pestanasAbiertas.filter(p => sistemaArchivos[p]);
+if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
+const salidaConsola = document.getElementById("salidaConsola");
+let modoConsolaActual = "salida";
+let historialRepl = [];
+let indiceHistorialRepl = -1;
+// Inicializar CodeMirror
+const editor = CodeMirror.fromTextArea(document.getElementById("codigo"), {
+mode: "python",
+theme: "prettier",
+lineNumbers: true,
+lineWrapping: configuracionEditor.lineWrapping,
+tabSize: configuracionEditor.tabSize,
+indentUnit: configuracionEditor.tabSize,
+autoCloseBrackets: true,
+inputStyle: "contenteditable",
+extraKeys: {
+"Ctrl-Space": "autocomplete",
+"Cmd-Enter": () => ejecutarCodigo(),
+"Ctrl-Enter": () => ejecutarCodigo()
+}
+});
+editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
+editor.setValue(sistemaArchivos[archivoActual] || "");
+editor.on("change", () => {
+if (archivoActual) {
+sistemaArchivos[archivoActual] = editor.getValue();
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+}
+if (document.getElementById('buscadorInput').value.trim() !== '') {
+actualizarBusqueda(false);
+}
+});
+editor.on("inputRead", (cm, change) => {
+if (change.text[0] && change.text[0].match(/[a-zA-Z_]/)) cm.showHint({completeSingle: false});
+});
+editor.on("cursorActivity", () => {
+const pos = editor.getCursor();
+document.getElementById("posicionCursor").textContent = ⁠</> Python Lín ${pos.line + 1}, Col ${pos.ch + 1}⁠;
+});
+// --- REGISTRO DEL MÓDULO IOS EN SKULPT ---
+Sk.builtinFiles = Sk.builtinFiles || { files: {} };
+Sk.builtinFiles["files"]["src/lib/ios.js"] = ⁠var $builtinmodule = function (name) { var mod = {__name__: new Sk.builtin.str("ios")}; mod.vibrate = new Sk.builtin.func(function(ms) { var dur = (ms && ms.v !== undefined) ? ms.v : 50; if (navigator.vibrate) navigator.vibrate(dur); return Sk.builtin.none.none$; }); mod.get_battery = new Sk.builtin.func(function() { return new Sk.builtin.str("iOS PWA Batería activa"); }); mod.clipboard_copy = new Sk.builtin.func(function(txt) { if (txt && txt.v !== undefined) navigator.clipboard.writeText(txt.v); return Sk.builtin.none.none$; }); return mod; };⁠;
+// --- BARRA DE SÍMBOLOS RÁPIDOS Y NAVEGACIÓN ---
+function insertarSimbolo(sym) {
+editor.focus();
+const doc = editor.getDoc();
+const cursor = doc.getCursor();
+switch(sym) {
+case 'NAV_LEFT':
+if (cursor.ch > 0) doc.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
+else if (cursor.line > 0) {
+let prevLineLen = editor.getLine(cursor.line - 1).length;
+doc.setCursor({ line: cursor.line - 1, ch: prevLineLen });
+}
+break;
+case 'NAV_RIGHT':
+let curLineLen = editor.getLine(cursor.line).length;
+if (cursor.ch < curLineLen) doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+else if (cursor.line < editor.lineCount() - 1) {
+doc.setCursor({ line: cursor.line + 1, ch: 0 });
+}
+break;
+case 'TAB':
+doc.replaceSelection(" ".repeat(configuracionEditor.tabSize || 4));
+break;
+case 'UNDO':
+editor.undo();
+break;
+case 'REDO':
+editor.redo();
+break;
+case '()':
+doc.replaceRange("()", cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+break;
+case '[]':
+doc.replaceRange("[]", cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+break;
+case '{}':
+doc.replaceRange("{}", cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+break;
+case '""':
+doc.replaceRange('""', cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+break;
+case "''":
+doc.replaceRange("''", cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 1 });
+break;
+case 'print()':
+doc.replaceRange('print()', cursor);
+doc.setCursor({ line: cursor.line, ch: cursor.ch + 6 });
+break;
+default:
+doc.replaceSelection(sym);
+break;
+}
+}
+document.querySelectorAll('.sym-btn').forEach(btn => {
+const sym = btn.getAttribute('data-sym');
+btn.addEventListener('pointerdown', (e) => {
+e.preventDefault();
+insertarSimbolo(sym);
+});
+});
+// --- PESTAÑAS MÚLTIPLES ---
+function renderizarPestanas() {
+const contenedor = document.getElementById('contenedorPestanas');
+contenedor.innerHTML = '';
+pestanasAbiertas.forEach(ruta => {
+const esActiva = ruta === archivoActual;
+const div = document.createElement('div');
+div.className = ⁠tab ${esActiva ? 'activa' : ''}⁠;
+div.innerHTML = ⁠<span>&lt;/&gt; ${ruta}</span> <span class="btn-cerrar-tab">✕</span>⁠;
+div.querySelector('span:first-child').addEventListener('click', () => cambiarPestana(ruta));
+div.querySelector('.btn-cerrar-tab').addEventListener('click', (e) => {
+e.stopPropagation();
+cerrarPestana(ruta);
+});
+contenedor.appendChild(div);
+});
+const btnMas = document.createElement('button');
+btnMas.className = 'btn-nueva-pestana';
+btnMas.innerHTML = '+';
+btnMas.title = 'Abrir archivo en pestaña';
+btnMas.addEventListener('click', abrirModalPestanaNueva);
+contenedor.appendChild(btnMas);
+localStorage.setItem('py_pestanas', JSON.stringify(pestanasAbiertas));
+}
+function cambiarPestana(ruta) {
+if (!sistemaArchivos[ruta]) return;
+archivoActual = ruta;
+localStorage.setItem('py_archivo_activo', ruta);
+editor.setValue(sistemaArchivos[ruta]);
+renderizarPestanas();
+limpiarMarcadores();
+}
+function abrirEnPestana(ruta) {
+if (!pestanasAbiertas.includes(ruta)) {
+pestanasAbiertas.push(ruta);
+}
+cambiarPestana(ruta);
+}
+function cerrarPestana(ruta) {
+pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
+if (pestanasAbiertas.length === 0) {
+const primera = Object.keys(sistemaArchivos)[0];
+if (primera) pestanasAbiertas.push(primera);
+}
+if (archivoActual === ruta) {
+cambiarPestana(pestanasAbiertas[pestanasAbiertas.length - 1]);
+} else {
+renderizarPestanas();
+}
+}
+// --- MODAL ABRIR PESTAÑA (+) ---
+function abrirModalPestanaNueva() {
+const selCarpeta = document.getElementById('selectorCarpetaPestana');
+selCarpeta.innerHTML = ⁠<option value="TODAS">📁 Todas las ubicaciones</option> <option value="">/ (Raíz)</option>⁠;
+carpetasCreadas.forEach(c => {
+const opt = document.createElement('option');
+opt.value = c;
+opt.textContent = ⁠📁 ${c}⁠;
+selCarpeta.appendChild(opt);
+});
+actualizarSelectorArchivosPestana();
+document.getElementById('modalAbrirPestana').classList.add('activo');
+}
+function actualizarSelectorArchivosPestana() {
+const carpeta = document.getElementById('selectorCarpetaPestana').value;
+const selArchivo = document.getElementById('selectorArchivoPestana');
+selArchivo.innerHTML = '';
+let archivosDisponibles = Object.keys(sistemaArchivos);
+if (carpeta !== 'TODAS') {
+if (carpeta === '') {
+archivosDisponibles = archivosDisponibles.filter(a => !a.includes('/'));
+} else {
+archivosDisponibles = archivosDisponibles.filter(a => a.startsWith(carpeta + '/'));
+}
+}
+if (archivosDisponibles.length === 0) {
+const opt = document.createElement('option');
+opt.value = '';
+opt.textContent = '(Sin archivos en esta carpeta)';
+selArchivo.appendChild(opt);
+} else {
+archivosDisponibles.forEach(a => {
+const opt = document.createElement('option');
+opt.value = a;
+opt.textContent = ⁠📄 ${a}⁠;
+selArchivo.appendChild(opt);
+});
+}
+}
+document.getElementById('selectorCarpetaPestana').addEventListener('change', actualizarSelectorArchivosPestana);
+function confirmarAbrirPestana() {
+const ruta = document.getElementById('selectorArchivoPestana').value;
+if (!ruta) return alert("Selecciona un archivo válido.");
+document.getElementById('modalAbrirPestana').classList.remove('activo');
+abrirEnPestana(ruta);
+}
+// --- CREACIÓN DE ARCHIVOS ---
+function abrirModalCrearArchivo() {
+const selector = document.getElementById('selectorCarpetaDestino');
+selector.innerHTML = '<option value="">/ (Raíz)</option>';
+carpetasCreadas.forEach(c => {
+const opt = document.createElement('option');
+opt.value = c;
+opt.textContent = ⁠📁 ${c}⁠;
+selector.appendChild(opt);
+});
+document.getElementById('nuevoNombreArchivo').value = '';
+document.getElementById('modalCrearArchivo').classList.add('activo');
+toggleSidebar();
+}
+function procesarCreacionArchivo(abrirAlFinal = false) {
+let nombre = document.getElementById('nuevoNombreArchivo').value.trim();
+const carpeta = document.getElementById('selectorCarpetaDestino').value;
+if (!nombre) return alert("Escribe un nombre para el archivo.");
+if (!nombre.includes('.')) nombre += '.py';
+const rutaCompleta = carpeta ? ⁠${carpeta}/${nombre}⁠ : nombre;
+if (sistemaArchivos[rutaCompleta]) return alert("Ya existe un archivo con ese nombre.");
+sistemaArchivos[rutaCompleta] = nombre.endsWith('.py') ? "# Nuevo script Python\n" : "";
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+document.getElementById('modalCrearArchivo').classList.remove('activo');
+if (abrirAlFinal) {
+abrirEnPestana(rutaCompleta);
+} else {
+renderizarPestanas();
+renderizarArchivos();
+alert(⁠Archivo "${rutaCompleta}" creado.⁠);
+}
+}
+// --- DETECTOR DE LONG PRESS (500ms) ---
+function configurarLongPress(elemento, callbackClick, callbackLongPress) {
+let pressTimer = null;
+let ejecutoLongPress = false;
+let startX = 0, startY = 0;
+const inicio = (e) => {
+ejecutoLongPress = false;
+if (e.touches && e.touches.length > 0) {
+startX = e.touches[0].clientX;
+startY = e.touches[0].clientY;
+}
+pressTimer = setTimeout(() => {
+ejecutoLongPress = true;
+if (navigator.vibrate) navigator.vibrate(45);
+callbackLongPress(e);
+}, 500);
+};
+const movimiento = (e) => {
+if (!pressTimer) return;
+if (e.touches && e.touches.length > 0) {
+const diffX = Math.abs(e.touches[0].clientX - startX);
+const diffY = Math.abs(e.touches[0].clientY - startY);
+if (diffX > 8 || diffY > 8) {
+clearTimeout(pressTimer);
+pressTimer = null;
+}
+}
+};
+const cancelar = () => {
+if (pressTimer) {
+clearTimeout(pressTimer);
+pressTimer = null;
+}
+};
+const fin = (e) => {
+if (pressTimer) {
+clearTimeout(pressTimer);
+pressTimer = null;
+}
+if (!ejecutoLongPress && callbackClick) {
+callbackClick(e);
+}
+};
+elemento.addEventListener('touchstart', inicio, { passive: true });
+elemento.addEventListener('touchmove', movimiento, { passive: true });
+elemento.addEventListener('touchend', fin);
+elemento.addEventListener('touchcancel', cancelar);
+elemento.addEventListener('mousedown', (e) => { if (e.button === 0) inicio(e); });
+elemento.addEventListener('mousemove', movimiento);
+elemento.addEventListener('mouseup', fin);
+elemento.addEventListener('mouseleave', cancelar);
+elemento.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+// --- MENÚ CONTEXTUAL ---
+let elementoContextual = { tipo: '', ruta: '' };
+function abrirMenuContextual(tipo, ruta) {
+elementoContextual = { tipo, ruta };
+const titulo = document.getElementById('contextualTitulo');
+const subtitulo = document.getElementById('contextualSubtitulo');
+const btnDescargar = document.getElementById('btnCtxDescargar');
+titulo.innerHTML = ⁠${tipo === 'carpeta' ? '📁 Carpeta' : '📄 Archivo'} <span id="btnCerrarContextual" style="cursor:pointer; color:#FF5198;">✕</span>⁠;
+subtitulo.textContent = ruta;
+btnDescargar.textContent = tipo === 'carpeta' ? '⬇️ Descargar todo (.json)' : '⬇️ Descargar archivo';
+document.getElementById('modalContextual').classList.add('activo');
+document.getElementById('btnCerrarContextual').onclick = () => {
+document.getElementById('modalContextual').classList.remove('activo');
+};
+}
+async function ejecutarCompartirContextual() {
+const { tipo, ruta } = elementoContextual;
+document.getElementById('modalContextual').classList.remove('activo');
+if (tipo === 'archivo') {
+const contenido = sistemaArchivos[ruta] || "";
+if (navigator.share) {
+try {
+const nombreArchivo = ruta.split('/').pop();
+const file = new File([contenido], nombreArchivo, { type: 'text/plain' });
+if (navigator.canShare && navigator.canShare({ files: [file] })) {
+await navigator.share({ files: [file], title: nombreArchivo });
+} else {
+await navigator.share({ title: nombreArchivo, text: contenido });
+}
+} catch (e) {
+if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
+}
+} else {
+navigator.clipboard.writeText(contenido).then(() => alert("Copiado al portapapeles."));
+}
+} else {
+const archivosCarpeta = {};
+for (let k in sistemaArchivos) {
+if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
+}
+const dataJson = JSON.stringify(archivosCarpeta, null, 2);
+if (navigator.share) {
+try {
+await navigator.share({ title: ⁠Carpeta ${ruta}⁠, text: dataJson });
+} catch (e) {
+if (e.name !== 'AbortError') alert("Error al compartir: " + e.message);
+}
+} else {
+navigator.clipboard.writeText(dataJson).then(() => alert("Copiado al portapapeles en JSON."));
+}
+}
+}
+function ejecutarDescargarContextual() {
+const { tipo, ruta } = elementoContextual;
+document.getElementById('modalContextual').classList.remove('activo');
+if (tipo === 'archivo') {
+const contenido = sistemaArchivos[ruta] || "";
+const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = ruta.split('/').pop();
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+} else {
+const archivosCarpeta = {};
+for (let k in sistemaArchivos) {
+if (k.startsWith(ruta + '/')) archivosCarpeta[k] = sistemaArchivos[k];
+}
+const blob = new Blob([JSON.stringify(archivosCarpeta, null, 2)], { type: 'application/json;charset=utf-8' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = ⁠${ruta}.json⁠;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+}
+function ejecutarEliminarContextual() {
+const { tipo, ruta } = elementoContextual;
+document.getElementById('modalContextual').classList.remove('activo');
+if (tipo === 'archivo') {
+eliminarArchivo(ruta);
+} else {
+eliminarCarpeta(ruta);
+}
+}
+// --- EXPLORADOR DE ARCHIVOS ---
+function toggleSidebar() {
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const estaAbierto = sidebar.classList.toggle('abierto');
+overlay.classList.toggle('activo', estaAbierto);
+if (estaAbierto) renderizarArchivos();
+}
+function renderizarArchivos() {
+const contenedor = document.getElementById('listaArchivos');
+contenedor.innerHTML = '';
+carpetasCreadas.forEach(carpeta => {
+const estaAbierta = carpetasEstado[carpeta] !== false;
+const folderWrap = document.createElement('div');
+folderWrap.style.marginBottom = '6px';
+const folderHead = document.createElement('div');
+folderHead.className = 'tree-folder';
+folderHead.innerHTML = ⁠<div class="tree-folder-left"> <span class="folder-arrow">${estaAbierta ? '▾' : '▸'}</span> <span>📁 ${carpeta}</span> </div> <span style="font-size:10px; color:#5C7482; padding-right:4px;">•••</span>⁠;
+configurarLongPress(
+folderHead,
+() => {
+carpetasEstado[carpeta] = !estaAbierta;
+localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+renderizarArchivos();
+},
+() => {
+abrirMenuContextual('carpeta', carpeta);
+}
+);
+folderWrap.appendChild(folderHead);
+const subFilesContainer = document.createElement('div');
+subFilesContainer.className = ⁠folder-children ${estaAbierta ? '' : 'colapsado'}⁠;
+const archivosDeEstaCarpeta = Object.keys(sistemaArchivos).filter(k => k.startsWith(carpeta + '/'));
+if (archivosDeEstaCarpeta.length === 0) {
+const empty = document.createElement('div');
+empty.className = 'tree-empty-folder';
+empty.textContent = '(Carpeta vacía)';
+subFilesContainer.appendChild(empty);
+} else {
+archivosDeEstaCarpeta.forEach(ruta => {
+const nombreArchivo = ruta.replace(carpeta + '/', '');
+const fileItem = document.createElement('div');
+fileItem.className = ⁠tree-file tree-file-sub ${ruta === archivoActual ? 'activo' : ''}⁠;
+fileItem.innerHTML = ⁠<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${nombreArchivo}</span>⁠;
+configurarLongPress(
+fileItem,
+() => {
+abrirEnPestana(ruta);
+toggleSidebar();
+},
+() => {
+abrirMenuContextual('archivo', ruta);
+}
+);
+subFilesContainer.appendChild(fileItem);
+});
+}
+folderWrap.appendChild(subFilesContainer);
+contenedor.appendChild(folderWrap);
+});
+const archivosRaiz = Object.keys(sistemaArchivos).filter(k => !k.includes('/'));
+if (archivosRaiz.length > 0) {
+const rootHeader = document.createElement('div');
+rootHeader.style.cssText = 'font-size:11px; color:#5C7482; font-weight:bold; margin: 10px 0 4px 6px; text-transform:uppercase;';
+rootHeader.textContent = 'Raíz';
+contenedor.appendChild(rootHeader);
+archivosRaiz.forEach(ruta => {
+const fileItem = document.createElement('div');
+fileItem.className = ⁠tree-file ${ruta === archivoActual ? 'activo' : ''}⁠;
+fileItem.innerHTML = ⁠<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${ruta}</span>⁠;
+configurarLongPress(
+fileItem,
+() => {
+abrirEnPestana(ruta);
+toggleSidebar();
+},
+() => {
+abrirMenuContextual('archivo', ruta);
+}
+);
+contenedor.appendChild(fileItem);
+});
+}
+}
+function crearCarpetaPrompt() {
+const nombre = prompt("Nombre de la nueva carpeta:");
+if (!nombre) return;
+const nombreLimpio = nombre.replace(/[^\w-]/gi, '').trim();
+if (!nombreLimpio) return alert("Nombre de carpeta inválido.");
+if (!carpetasCreadas.includes(nombreLimpio)) {
+carpetasCreadas.push(nombreLimpio);
+carpetasEstado[nombreLimpio] = true;
+localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+renderizarArchivos();
+}
+}
+function eliminarArchivo(ruta) {
+if (Object.keys(sistemaArchivos).length <= 1) return alert("Debes conservar al menos un archivo.");
+if (confirm(⁠¿Eliminar ${ruta}?⁠)) {
+delete sistemaArchivos[ruta];
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+cerrarPestana(ruta);
+renderizarArchivos();
+}
+}
+function eliminarCarpeta(carpeta) {
+if (confirm(⁠¿Eliminar la carpeta "${carpeta}" y todos sus archivos?⁠)) {
+carpetasCreadas = carpetasCreadas.filter(c => c !== carpeta);
+delete carpetasEstado[carpeta];
+localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+localStorage.setItem('py_carpetas_estado', JSON.stringify(carpetasEstado));
+for (let ruta in sistemaArchivos) {
+if (ruta.startsWith(carpeta + '/')) {
+delete sistemaArchivos[ruta];
+pestanasAbiertas = pestanasAbiertas.filter(p => p !== ruta);
+}
+}
+if (Object.keys(sistemaArchivos).length === 0) {
+sistemaArchivos["main.py"] = "# Archivo principal\nprint('Hola Mundo')";
+pestanasAbiertas = ["main.py"];
+archivoActual = "main.py";
+} else if (!sistemaArchivos[archivoActual]) {
+archivoActual = Object.keys(sistemaArchivos)[0];
+if (!pestanasAbiertas.includes(archivoActual)) pestanasAbiertas.push(archivoActual);
+}
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+cambiarPestana(archivoActual);
+renderizarArchivos();
+}
+}
+// --- RESPALDO E IMPORTACIÓN ---
+function exportarWorkspaceCompleto() {
+const backupData = {
+fecha: new Date().toISOString(),
+sistemaArchivos,
+carpetasCreadas,
+pestanasAbiertas
+};
+const jsonStr = JSON.stringify(backupData, null, 2);
+const blob = new Blob([jsonStr], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = ⁠backup_python_movil_${new Date().toISOString().slice(0,10)}.json⁠;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+function dispararSelectorSubir() {
+document.getElementById('inputSubirArchivos').click();
+}
+document.getElementById('inputSubirArchivos').addEventListener('change', (e) => {
+const files = e.target.files;
+if (!files || files.length === 0) return;
+Array.from(files).forEach(file => {
+const reader = new FileReader();
+reader.onload = (evt) => {
+const contenido = evt.target.result;
+if (file.name.endsWith('.json')) {
+try {
+const parsed = JSON.parse(contenido);
+if (parsed.sistemaArchivos) {
+if (confirm("¿Restaurar este backup completo? Se combinará con tus archivos actuales.")) {
+sistemaArchivos = { ...sistemaArchivos, ...parsed.sistemaArchivos };
+if (parsed.carpetasCreadas) {
+carpetasCreadas = Array.from(new Set([...carpetasCreadas, ...parsed.carpetasCreadas]));
+}
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+localStorage.setItem('py_carpetas', JSON.stringify(carpetasCreadas));
+renderizarPestanas();
+renderizarArchivos();
+alert("Backup restaurado correctamente.");
+}
+return;
+}
+} catch (err) {}
+}
+sistemaArchivos[file.name] = contenido;
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+abrirEnPestana(file.name);
+renderizarArchivos();
+alert(⁠Archivo "${file.name}" importado.⁠);
+};
+reader.readAsText(file);
+});
+e.target.value = '';
+});
+// --- SNAPSHOTS (🔀) ---
+function guardarSnapshot(etiqueta = "Auto") {
+if (!archivoActual) return;
+const key = ⁠py_snap_${archivoActual}⁠;
+let snapshots = JSON.parse(localStorage.getItem(key)) || [];
+const nuevo = {
+fecha: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+etiqueta,
+codigo: editor.getValue()
+};
+snapshots.unshift(nuevo);
+if (snapshots.length > 10) snapshots.pop();
+localStorage.setItem(key, JSON.stringify(snapshots));
+}
+function abrirModalSnapshots() {
+const modal = document.getElementById('modalSnapshots');
+const contenedor = document.getElementById('listaSnapshots');
+const key = ⁠py_snap_${archivoActual}⁠;
+let snapshots = JSON.parse(localStorage.getItem(key)) || [];
+contenedor.innerHTML = '';
+if (snapshots.length === 0) {
+contenedor.innerHTML = '<div style="color:#5C7482; font-size:12px; font-style:italic;">No hay snapshots guardados para este archivo.</div>';
+} else {
+snapshots.forEach((s, idx) => {
+const div = document.createElement('div');
+div.className = 'snapshot-item';
+div.innerHTML = ⁠<div> <strong style="color:#3CA9E2;">${s.etiqueta}</strong>  <span style="color:#8198a5; font-size:10px;">(${s.fecha})</span> </div> <button data-idx="${idx}">Restaurar</button>⁠;
+div.querySelector('button').onclick = () => {
+if (confirm("¿Reemplazar el contenido actual con esta versión?")) {
+editor.setValue(s.codigo);
+modal.classList.remove('activo');
+}
+};
+contenedor.appendChild(div);
+});
+}
+modal.classList.add('activo');
+}
+// --- AJUSTES (•••) ---
+function abrirModalAjustes() {
+document.getElementById('cfgTamanoFuente').value = configuracionEditor.fontSize || '14px';
+document.getElementById('cfgTabSize').value = configuracionEditor.tabSize || 4;
+document.getElementById('cfgLineWrapping').value = String(configuracionEditor.lineWrapping);
+document.getElementById('modalAjustes').classList.add('activo');
+}
+function guardarAjustes() {
+configuracionEditor.fontSize = document.getElementById('cfgTamanoFuente').value;
+configuracionEditor.tabSize = parseInt(document.getElementById('cfgTabSize').value, 10);
+configuracionEditor.lineWrapping = document.getElementById('cfgLineWrapping').value === 'true';
+localStorage.setItem('py_config', JSON.stringify(configuracionEditor));
+editor.getWrapperElement().style.fontSize = configuracionEditor.fontSize;
+editor.setOption('lineWrapping', configuracionEditor.lineWrapping);
+editor.setOption('tabSize', configuracionEditor.tabSize);
+editor.setOption('indentUnit', configuracionEditor.tabSize);
+editor.refresh();
+document.getElementById('modalAjustes').classList.remove('activo');
+}
+// --- BUSCADOR Y REEMPLAZO ---
+const buscadorInput = document.getElementById('buscadorInput');
+const badgeCoincidencias = document.getElementById('badgeCoincidencias');
+const barraReemplazo = document.getElementById('barraReemplazo');
+const inputReemplazo = document.getElementById('inputReemplazo');
+let listaMarcadores = [];
+let coincidencias = [];
+let indiceActual = -1;
+let queryPrevio = "";
+function limpiarMarcadores() {
+listaMarcadores.forEach(m => m.clear());
+listaMarcadores = [];
+coincidencias = [];
+indiceActual = -1;
+badgeCoincidencias.style.display = 'none';
+}
+function actualizarBusqueda(avanzar = true) {
+const query = buscadorInput.value;
+if (!query) {
+limpiarMarcadores();
+queryPrevio = "";
+return;
+}
+if (query !== queryPrevio) {
+limpiarMarcadores();
+queryPrevio = query;
+let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
+while (cursor.findNext()) {
+coincidencias.push({from: cursor.from(), to: cursor.to()});
+listaMarcadores.push(editor.markText(cursor.from(), cursor.to(), {className: "cm-searching"}));
+}
+indiceActual = coincidencias.length > 0 ? 0 : -1;
+} else if (avanzar && coincidencias.length > 0) {
+indiceActual = (indiceActual + 1) % coincidencias.length;
+}
+if (coincidencias.length > 0) {
+badgeCoincidencias.style.display = 'inline-block';
+badgeCoincidencias.textContent = ⁠[${indiceActual + 1}/${coincidencias.length}]⁠;
+const match = coincidencias[indiceActual];
+editor.setSelection(match.from, match.to);
+editor.scrollIntoView({from: match.from, to: match.to}, 100);
+} else {
+badgeCoincidencias.style.display = 'inline-block';
+badgeCoincidencias.textContent = ⁠0/0⁠;
+}
+}
+buscadorInput.addEventListener('keydown', (e) => {
+if (e.key === 'Enter') {
+e.preventDefault();
+actualizarBusqueda(true);
+}
+});
+buscadorInput.addEventListener('input', () => actualizarBusqueda(false));
+document.getElementById('btnToggleReplace').addEventListener('click', () => {
+barraReemplazo.classList.toggle('activa');
+});
+document.getElementById('btnReemplazarUno').addEventListener('click', () => {
+if (indiceActual >= 0 && coincidencias[indiceActual]) {
+const match = coincidencias[indiceActual];
+const nuevoTexto = inputReemplazo.value;
+editor.replaceRange(nuevoTexto, match.from, match.to);
+actualizarBusqueda(false);
+}
+});
+document.getElementById('btnReemplazarTodo').addEventListener('click', () => {
+const query = buscadorInput.value;
+const nuevoTexto = inputReemplazo.value;
+if (!query) return;
+let cursor = editor.getSearchCursor(query, {line: 0, ch: 0}, {caseFold: true});
+while (cursor.findNext()) {
+cursor.replace(nuevoTexto);
+}
+actualizarBusqueda(false);
+});
+function bindAccion(id, fn) {
+const el = document.getElementById(id);
+if (!el) return;
+let touchDisparado = false;
+el.addEventListener('touchend', (e) => {
+touchDisparado = true;
+e.preventDefault();
+fn();
+setTimeout(() => { touchDisparado = false; }, 350);
+}, { passive: false });
+el.addEventListener('click', (e) => {
+if (touchDisparado) return;
+e.preventDefault();
+fn();
+});
+}
+function abrirModalDiagnostico() {
+const modal = document.getElementById('modalListo');
+const info = document.getElementById('infoDiagnostico');
+info.innerHTML = ⁠• <strong>Motor:</strong> Skulpt 1.2 (Timeout 6s)<br> • <strong>Módulo iOS:</strong> Habilitado (import ios)<br> • <strong>I/O Virtual:</strong> Habilitado (open/write reactivo)<br> • <strong>Archivo en uso:</strong> ${archivoActual}<br> • <strong>Pestañas:</strong> ${pestanasAbiertas.length}<br> • <strong>Archivos totales:</strong> ${Object.keys(sistemaArchivos).length}<br> • <strong>Estado Red:</strong> ${navigator.onLine ? 'Online' : 'Offline (Cache PWA)'}⁠;
+modal.classList.add('activo');
+}
+function toggleConsola() {
+const seccion = document.getElementById('seccionConsola');
+const flecha = document.getElementById('flechaConsola');
+seccion.classList.toggle('oculta');
+flecha.textContent = seccion.classList.contains('oculta') ? '🔼' : '🔽';
+setTimeout(() => editor.refresh(), 260);
+}
+// --- MÓDULOS NATIVOS SKULPT (open VFS reactivo) ---
+function configurarModulosSkulpt() {
+Sk.execLimit = 6000;
+// Virtual File System reactivo para Skulpt
+Sk.builtins = Sk.builtins || {};
+Sk.builtins.open = new Sk.builtin.func(function(fn, mode) {
+var filename = Sk.ffi.remapToJs(fn);
+var m = mode ? Sk.ffi.remapToJs(mode) : 'r';
+var vfsFileObj = {
+tp$getattr: function(pyName) {
+var name = pyName.v || pyName;
+if (name === "read") {
+return new Sk.builtin.func(function() {
+var content = sistemaArchivos[filename] !== undefined ? sistemaArchivos[filename] : "";
+return new Sk.builtin.str(content);
+});
+}
+if (name === "write") {
+return new Sk.builtin.func(function(data) {
+var strData = Sk.ffi.remapToJs(data);
+if (m === 'a' && sistemaArchivos[filename]) {
+sistemaArchivos[filename] += strData;
+} else {
+sistemaArchivos[filename] = strData;
+}
+localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+if (archivoActual === filename) {
+editor.setValue(sistemaArchivos[filename]);
+}
+renderizarArchivos();
+return Sk.builtin.none.none$;
+});
+}
+if (name === "close") {
+return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
+}
+if (name === "enter") {
+return new Sk.builtin.func(function() { return vfsFileObj; });
+}
+if (name === "exit") {
+return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
+}
+return undefined;
+}
+};
+return vfsFileObj;
+});
+Sk.configure({
+output: (t) => {
+salidaConsola.appendChild(document.createTextNode(t));
+salidaConsola.scrollTop = salidaConsola.scrollHeight;
+},
+read: (x) => {
+// 1. Archivos internos y módulos integrados de Skulpt (incluye src/lib/ios.js)
+if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"] !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
+return Sk.builtinFiles["files"][x];
+}
+// 2. Normalización de rutas para el sistema virtual
+let clean = x.replace(/^src/lib//, '').replace(/^.//, '');
+let baseWithoutExt = clean.replace(/.(js|py)$/, '');
+// Si Skulpt busca el paquete directorio (e.g. "modulos/init.js" o "modulos/init.py")
+let folderName = baseWithoutExt.replace(//init$/, '');
+let esCarpeta = carpetasCreadas.includes(folderName) || Object.keys(sistemaArchivos).some(k => k.startsWith(folderName + '/'));
+if (clean.includes('init') && esCarpeta) {
+let initPath = folderName + '/init.py';
+if (sistemaArchivos[initPath] !== undefined) return sistemaArchivos[initPath];
+// Importante: Si Skulpt pide .js para init, NO devolver '#' de Python
+if (x.endsWith('.js')) {
+return "var $builtinmodule = function() { return {name: new Sk.builtin.str('" + folderName + "')}; };";
+}
+return "";
+}
+// Búsqueda de scripts Python en VFS
+if (sistemaArchivos[clean] !== undefined && clean.endsWith('.py')) return sistemaArchivos[clean];
+if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
+if (sistemaArchivos[baseWithoutExt + '.py'] !== undefined) return sistemaArchivos[baseWithoutExt + '.py'];
+// Notación modular por puntos: 'modulos.operaciones'
+let rutaConBarras = baseWithoutExt.replace(/./g, '/') + '.py';
+if (sistemaArchivos[rutaConBarras] !== undefined) return sistemaArchivos[rutaConBarras];
+// Búsqueda relativa a la carpeta del archivo en ejecución
+if (archivoActual && archivoActual.includes('/')) {
+const dir = archivoActual.substring(0, archivoActual.lastIndexOf('/'));
+let rutaRel = ⁠${dir}/${baseWithoutExt}.py⁠;
+if (sistemaArchivos[rutaRel] !== undefined) return sistemaArchivos[rutaRel];
+}
+throw "No module named '" + clean + "'";
+},
+inputfunTakesPrompt: true,
+inputfun: (promptText) => {
+return new Promise((resolve) => {
+salidaConsola.appendChild(document.createTextNode(promptText));
+let input = document.createElement("input");
+input.type = "text";
+input.className = "terminal-input";
+input.setAttribute("autocomplete", "off");
+salidaConsola.appendChild(input);
+input.focus();
+salidaConsola.scrollTop = salidaConsola.scrollHeight;
+input.addEventListener("keydown", (e) => {
+if (e.key === "Enter") {
+let val = input.value;
+input.remove();
+salidaConsola.appendChild(document.createTextNode(val + "\n"));
+resolve(val);
+}
+});
+});
+}
+});
+}
+// --- EJECUTOR PYTHON ASÍNCRONO ---
+function ejecutarCodigo() {
+guardarSnapshot("Pre-run");
+const seccion = document.getElementById('seccionConsola');
+if (seccion.classList.contains('oculta')) {
+seccion.classList.remove('oculta');
+document.getElementById('flechaConsola').textContent = '🔽';
+setTimeout(() => editor.refresh(), 260);
+}
+salidaConsola.innerHTML = "";
+configurarModulosSkulpt();
+let codigoPuro = editor.getValue();
+let tInicio = performance.now();
+Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codigoPuro, true))
+.then(() => {
+let tFin = performance.now();
+let benchSpan = document.createElement("span");
+benchSpan.className = "console-bench";
+benchSpan.textContent = ⁠⏱️ Ejecutado en ${(tFin - tInicio).toFixed(1)} ms⁠;
+salidaConsola.appendChild(benchSpan);
+salidaConsola.scrollTop = salidaConsola.scrollHeight;
+})
+.catch((err) => {
+let errStr = err.toString();
+let lineMatch = errStr.match(/on line (\d+)/i) || errStr.match(/line (\d+)/i);
+let errContainer = document.createElement("div");
+errContainer.style.color = "#FF5198";
+errContainer.style.marginTop = "4px";
+if (lineMatch && lineMatch[1]) {
+let numLineaReal = parseInt(lineMatch[1], 10);
+errContainer.innerHTML = ⁠[Error] ${errStr} <br><span class="console-error-tag">👉 Toca para ir a la Línea ${numLineaReal}</span>⁠;
+errContainer.querySelector('.console-error-tag').onclick = () => {
+editor.focus();
+editor.setCursor({ line: numLineaReal - 1, ch: 0 });
+editor.scrollIntoView({ line: numLineaReal - 1, ch: 0 }, 100);
+};
+} else {
+errContainer.textContent = ⁠[Error] ${errStr}⁠;
+}
+salidaConsola.appendChild(errContainer);
+salidaConsola.scrollTop = salidaConsola.scrollHeight;
+});
+}
+// --- MODO REPL INTERACTIVO (>>>) ---
+const btnModoSalida = document.getElementById('btnModoSalida');
+const btnModoRepl = document.getElementById('btnModoRepl');
+const contenedorReplInput = document.getElementById('contenedorReplInput');
+const replInput = document.getElementById('replInput');
+function alternarModoConsola(modo) {
+modoConsolaActual = modo;
+if (modo === 'repl') {
+btnModoRepl.classList.add('activo');
+btnModoSalida.classList.remove('activo');
+contenedorReplInput.classList.add('activo');
+salidaConsola.innerHTML = "Python 3.x REPL Interactivo Móvil\nUsa Enter para evaluar expresiones.\n\n";
+replInput.focus();
+} else {
+btnModoSalida.classList.add('activo');
+btnModoRepl.classList.remove('activo');
+contenedorReplInput.classList.remove('activo');
+}
+}
+btnModoSalida.addEventListener('click', () => alternarModoConsola('salida'));
+btnModoRepl.addEventListener('click', () => alternarModoConsola('repl'));
+replInput.addEventListener('keydown', (e) => {
+if (e.key === 'Enter') {
+let linea = replInput.value.trim();
+if (!linea) return;
+historialRepl.push(linea);
+indiceHistorialRepl = historialRepl.length;
+salidaConsola.appendChild(document.createTextNode(⁠>>> ${linea}\n⁠));
+replInput.value = '';
+configurarModulosSkulpt();
+let wrapCode = ⁠try:\n    __r = eval(${JSON.stringify(linea)})\n    if __r is not None: print(__r)\nexcept:\n    exec(${JSON.stringify(linea)})\n⁠;
+Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, wrapCode, true))
+.catch((err) => {
+let errSpan = document.createElement("span");
+errSpan.style.color = "#FF5198";
+errSpan.textContent = err.toString() + "\n";
+salidaConsola.appendChild(errSpan);
+})
+.finally(() => {
+salidaConsola.scrollTop = salidaConsola.scrollHeight;
+});
+}
+});
+// Asignación de Eventos de la Interfaz
+bindAccion('btnCarpeta', toggleSidebar);
+bindAccion('btnCerrarSidebar', toggleSidebar);
+bindAccion('overlay', toggleSidebar);
+bindAccion('btnAbrirModalArchivo', abrirModalCrearArchivo);
+bindAccion('btnCerrarModalArchivo', () => document.getElementById('modalCrearArchivo').classList.remove('activo'));
+bindAccion('btnSoloCrear', () => procesarCreacionArchivo(false));
+bindAccion('btnCrearYAbrir', () => procesarCreacionArchivo(true));
+bindAccion('btnCrearCarpeta', crearCarpetaPrompt);
+bindAccion('btnSubirArchivo', dispararSelectorSubir);
+bindAccion('btnExportarWorkspace', exportarWorkspaceCompleto);
+bindAccion('btnCerrarModalPestana', () => document.getElementById('modalAbrirPestana').classList.remove('activo'));
+bindAccion('btnConfirmarAbrirPestana', confirmarAbrirPestana);
+bindAccion('btnEjecutar', ejecutarCodigo);
+bindAccion('flechaConsola', toggleConsola);
+bindAccion('btnLimpiarConsola', () => salidaConsola.innerHTML = "");
+bindAccion('estadoMotor', abrirModalDiagnostico);
+bindAccion('estadoInferior', abrirModalDiagnostico);
+bindAccion('btnCerrarModal', () => document.getElementById('modalListo').classList.remove('activo'));
+bindAccion('btnReiniciarMotor', () => {
+salidaConsola.innerHTML = "Motor Python reiniciado.\n";
+document.getElementById('modalListo').classList.remove('activo');
+});
+// Snapshots y Ajustes
+bindAccion('btnRamas', abrirModalSnapshots);
+bindAccion('btnCerrarSnapshots', () => document.getElementById('modalSnapshots').classList.remove('activo'));
+bindAccion('btnCrearSnapshotManual', () => {
+guardarSnapshot("Manual");
+abrirModalSnapshots();
+});
+bindAccion('btnOpciones', abrirModalAjustes);
+bindAccion('btnCerrarAjustes', () => document.getElementById('modalAjustes').classList.remove('activo'));
+bindAccion('btnGuardarAjustes', guardarAjustes);
+// Menú Contextual
+bindAccion('btnCtxCompartir', ejecutarCompartirContextual);
+bindAccion('btnCtxDescargar', ejecutarDescargarContextual);
+bindAccion('btnCtxEliminar', ejecutarEliminarContextual);
+renderizarPestanas();
+</script>
 </body>
 </html>

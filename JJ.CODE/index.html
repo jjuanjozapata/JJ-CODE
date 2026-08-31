@@ -655,7 +655,7 @@
     }
     .modal-btn:active { opacity: 0.85; }
 
-    /* Menú Contextual (Long Press) */
+    /* Menú Contextual */
     .context-menu-actions {
       display: flex;
       flex-direction: column;
@@ -1793,42 +1793,49 @@
 
     // --- MÓDULOS NATIVOS SKULPT (ios, open VFS) ---
     function configurarModulosSkulpt() {
-      Sk.execLimit = 6000; // Guardia anti-bucles: 6s
+      Sk.execLimit = 6000;
 
-      // Registro nativo de open() en Skulpt sin inyectar código en el archivo del usuario
+      // Clase Virtual File System pura para Skulpt
       Sk.builtins = Sk.builtins || {};
-      Sk.builtins.open = new Sk.builtin.func(function(filename, mode) {
-        let fn = Sk.ffi.remapToJs(filename);
-        let m = mode ? Sk.ffi.remapToJs(mode) : 'r';
+      Sk.builtins.open = new Sk.builtin.func(function(fn, mode) {
+        var filename = Sk.ffi.remapToJs(fn);
+        var m = mode ? Sk.ffi.remapToJs(mode) : 'r';
 
-        let vfsObj = {
-          __name__: new Sk.builtin.str("VFSFile"),
-          read: new Sk.builtin.func(function() {
-            let content = sistemaArchivos[fn] !== undefined ? sistemaArchivos[fn] : "";
-            return new Sk.builtin.str(content);
-          }),
-          write: new Sk.builtin.func(function(data) {
-            let strData = Sk.ffi.remapToJs(data);
-            if (m === 'a' && sistemaArchivos[fn]) {
-              sistemaArchivos[fn] += strData;
-            } else {
-              sistemaArchivos[fn] = strData;
+        var vfsFileObj = {
+          tp$getattr: function(pyName) {
+            var name = pyName.v || pyName;
+            if (name === "read") {
+              return new Sk.builtin.func(function() {
+                var content = sistemaArchivos[filename] !== undefined ? sistemaArchivos[filename] : "";
+                return new Sk.builtin.str(content);
+              });
             }
-            localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
-            renderizarArchivos();
-            return Sk.builtin.none.none$;
-          }),
-          close: new Sk.builtin.func(function() {
-            return Sk.builtin.none.none$;
-          }),
-          __enter__: new Sk.builtin.func(function() {
-            return this;
-          }),
-          __exit__: new Sk.builtin.func(function() {
-            return Sk.builtin.none.none$;
-          })
+            if (name === "write") {
+              return new Sk.builtin.func(function(data) {
+                var strData = Sk.ffi.remapToJs(data);
+                if (m === 'a' && sistemaArchivos[filename]) {
+                  sistemaArchivos[filename] += strData;
+                } else {
+                  sistemaArchivos[filename] = strData;
+                }
+                localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+                renderizarArchivos();
+                return Sk.builtin.none.none$;
+              });
+            }
+            if (name === "close") {
+              return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
+            }
+            if (name === "__enter__") {
+              return new Sk.builtin.func(function() { return vfsFileObj; });
+            }
+            if (name === "__exit__") {
+              return new Sk.builtin.func(function() { return Sk.builtin.none.none$; });
+            }
+            return undefined;
+          }
         };
-        return vfsObj;
+        return vfsFileObj;
       });
 
       Sk.configure({
@@ -1837,8 +1844,8 @@
           salidaConsola.scrollTop = salidaConsola.scrollHeight;
         },
         read: (x) => {
-          // Módulo puente Hardware iPhone: 'import ios'
-          if (x === "src/lib/ios.js" || x === "./ios.js" || x === "ios.js" || x === "ios") {
+          // 1. Módulo puente Hardware iPhone: 'import ios'
+          if (x.includes("ios.js") || x.includes("ios.py") || x === "ios") {
             return `
               var $builtinmodule = function (name) {
                 var mod = {__name__: new Sk.builtin.str("ios")};
@@ -1859,27 +1866,41 @@
             `;
           }
 
-          // Librería estándar de Skulpt
+          // 2. Librería estándar de Skulpt
           if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"] !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
             return Sk.builtinFiles["files"][x];
           }
 
+          // 3. Normalización de rutas y resolución modular local
           let clean = x.replace(/^src\/lib\//, '').replace(/^\.\//, '');
+          let baseWithoutExt = clean.replace(/\.(js|py)$/, '');
 
+          // Búsqueda directa
           if (sistemaArchivos[clean] !== undefined) return sistemaArchivos[clean];
           if (sistemaArchivos[clean + '.py'] !== undefined) return sistemaArchivos[clean + '.py'];
+          if (sistemaArchivos[baseWithoutExt + '.py'] !== undefined) return sistemaArchivos[baseWithoutExt + '.py'];
 
-          let rutaConBarras = clean.replace(/\.js$/, '').replace(/\./g, '/') + '.py';
-          if (sistemaArchivos[rutaConBarras] !== undefined) return sistemaArchivos[rutaConBarras];
-
-          if (archivoActual && archivoActual.includes('/')) {
-            const directorioActual = archivoActual.substring(0, archivoActual.lastIndexOf('/'));
-            const rutaRelativa = `${directorioActual}/${clean}`;
-            if (sistemaArchivos[rutaRelativa] !== undefined) return sistemaArchivos[rutaRelativa];
-            if (sistemaArchivos[rutaRelativa + '.py'] !== undefined) return sistemaArchivos[rutaRelativa + '.py'];
+          // Soporte automático para paquetes y carpetas (__init__.py)
+          let folderName = baseWithoutExt.replace(/\/__init__$/, '');
+          let esCarpeta = carpetasCreadas.includes(folderName) || Object.keys(sistemaArchivos).some(k => k.startsWith(folderName + '/'));
+          if (esCarpeta) {
+            let initPath = folderName + '/__init__.py';
+            if (sistemaArchivos[initPath] !== undefined) return sistemaArchivos[initPath];
+            return "# Paquete Python virtual\n";
           }
 
-          throw "Módulo no encontrado: '" + x + "'";
+          // Notación por puntos: 'modulos.operaciones' -> 'modulos/operaciones.py'
+          let rutaConBarras = baseWithoutExt.replace(/\./g, '/') + '.py';
+          if (sistemaArchivos[rutaConBarras] !== undefined) return sistemaArchivos[rutaConBarras];
+
+          // Búsqueda relativa al archivo activo
+          if (archivoActual && archivoActual.includes('/')) {
+            const dir = archivoActual.substring(0, archivoActual.lastIndexOf('/'));
+            let rutaRel = `${dir}/${baseWithoutExt}.py`;
+            if (sistemaArchivos[rutaRel] !== undefined) return sistemaArchivos[rutaRel];
+          }
+
+          throw "No module named " + clean;
         },
         inputfunTakesPrompt: true,
         inputfun: (promptText) => {
@@ -2008,7 +2029,7 @@
       }
     });
 
-    // Bindings de Eventos
+    // Bindings de Eventos Generales
     bindAccion('btnCarpeta', toggleSidebar);
     bindAccion('btnCerrarSidebar', toggleSidebar);
     bindAccion('overlay', toggleSidebar);

@@ -1831,6 +1831,14 @@
         this.filename = filename;
         this.mode = mode || 'r';
         this.pos = 0;
+        if (this.mode === 'w') {
+          sistemaArchivos[this.filename] = "";
+          localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
+          if (archivoActual === this.filename) {
+            editor.setValue("");
+          }
+          renderizarArchivos();
+        }
       }
       Sk.abstr.setUpInheritance("VfsFile", VfsFileObject, Sk.builtin.object);
 
@@ -1851,7 +1859,7 @@
             if (self.mode === 'a' && sistemaArchivos[fn]) {
               sistemaArchivos[fn] += strData;
             } else {
-              sistemaArchivos[fn] = strData;
+              sistemaArchivos[fn] = (sistemaArchivos[fn] || "") + strData;
             }
             localStorage.setItem('py_archivos', JSON.stringify(sistemaArchivos));
             if (archivoActual === fn) {

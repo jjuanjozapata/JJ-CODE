@@ -555,28 +555,43 @@ def restar(a, b):
     }
 
     // Ejecución de Código Python 3
-    async function ejecutarCodigo() {
-      if (!pyodide) {
-        alert("El motor Python 3 aún se está descargando/iniciando...");
-        return;
-      }
+   function ejecutarCodigo() {
+  salidaConsola.textContent = "";
+  estadoEjecucion.textContent = "Ejecutando...";
 
-      salidaConsola.textContent = "";
-      estadoEjecucion.textContent = "Ejecutando...";
+  Sk.pre = "salidaConsola";
+  Sk.configure({
+    output: function(texto) {
+      salidaConsola.textContent += texto;
+      salidaConsola.scrollTop = salidaConsola.scrollHeight;
+    },
+    read: builtinRead,
+    inputfun: function(promptText) {
+      return window.prompt(promptText || "Introduce un valor:");
+    },
+    inputfunTakesPrompt: true,
+    execLimit: null, // Desactiva el límite de tiempo durante inputs
+    __future__: Sk.python3
+  });
 
-      try {
-        sincronizarVFS();
-        const codigo = editor.getValue();
-        await pyodide.runPythonAsync(codigo);
-        estadoEjecucion.textContent = "Python 3 Listo";
-      } catch (err) {
-        estadoEjecucion.textContent = "Error de ejecución";
-        const span = document.createElement("span");
-        span.className = "console-error";
-        span.textContent = "\n" + err;
-        salidaConsola.appendChild(span);
-      }
-    }
+  // Asegurar que el objeto de ejecución no tenga timeout
+  Sk.execLimit = null;
+
+  const codigo = editor.getValue();
+  const promise = Sk.misceval.asyncToPromise(function() {
+    return Sk.importMainWithBody("<stdin>", false, codigo, true);
+  }, null); // El segundo parámetro en null evita límites en las llamadas asíncronas
+
+  promise.then(function() {
+    estadoEjecucion.textContent = "Python Listo";
+  }).catch(function(err) {
+    estadoEjecucion.textContent = "Error";
+    const msg = document.createElement("span");
+    msg.className = "console-error";
+    msg.textContent = "\n[Error] " + err.toString();
+    salidaConsola.appendChild(msg);
+  });
+}
 
     // Botones de accesos rápidos
     function insertarSimbolo(sym) {

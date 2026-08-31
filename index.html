@@ -643,22 +643,59 @@ def restar(a, b):
     }
 
     // Módulo Nativo embebido Skulpt para iOS
-    function builtinRead(x) {
-      if (x === "ios" || x === "ios.js") {
-        return `
-          var $builtinmodule = function(name) {
-            var mod = {};
-            mod.get_bateria = new Sk.builtin.func(function() {
-              return new Sk.builtin.str("100% (Simulado PWA)");
-            });
-            mod.vibrate = new Sk.builtin.func(function(ms) {
-              if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
-              return Sk.builtin.none.none$;
-            });
-            return mod;
-          };
-        `;
-      }
+   function builtinRead(x) {
+  // 1. Módulo nativo ios
+  if (x === "ios" || x === "ios.js" || x === "src/lib/ios.js") {
+    return `
+      var $builtinmodule = function(name) {
+        var mod = {};
+        var fnBateria = new Sk.builtin.func(function() {
+          return new Sk.builtin.str("100% (Simulado PWA)");
+        });
+        mod.get_battery = fnBateria;
+        mod.get_bateria = fnBateria;
+        mod.vibrate = new Sk.builtin.func(function(ms) {
+          if (navigator.vibrate) navigator.vibrate(Sk.ffi.remapToJs(ms) || 50);
+          return Sk.builtin.none.none$;
+        });
+        return mod;
+      };
+    `;
+  }
+
+  // 2. Limpiar ruta de entrada
+  let rutaBuscada = x.replace(/^\.\//, "");
+
+  // 3. Coincidencia directa exacta en el VFS
+  if (sistemaArchivos[rutaBuscada] !== undefined) {
+    return sistemaArchivos[rutaBuscada];
+  }
+
+  // 4. Paquetes: simular __init__.py si la carpeta existe en el VFS
+  if (rutaBuscada.endsWith("/__init__.py")) {
+    let carpeta = rutaBuscada.replace("/__init__.py", "");
+    let existeCarpeta = Object.keys(sistemaArchivos).some(k => k.startsWith(carpeta + "/"));
+    if (existeCarpeta) {
+      return sistemaArchivos[rutaBuscada] || "";
+    }
+  }
+
+  // 5. Soporte para importación por puntos (ej: modulos.operaciones)
+  let rutaPuntos = rutaBuscada.replace(/\.py$/, "").replace(/\//g, ".");
+  for (let ruta in sistemaArchivos) {
+    let virtualPuntos = ruta.replace(/\.py$/, "").replace(/\//g, ".");
+    if (virtualPuntos === rutaPuntos || ruta === rutaBuscada) {
+      return sistemaArchivos[ruta];
+    }
+  }
+
+  // 6. Archivos estándar de Skulpt
+  if (Sk.builtinFiles !== undefined && Sk.builtinFiles["files"][x] !== undefined) {
+    return Sk.builtinFiles["files"][x];
+  }
+
+  throw "No se encontró el módulo: '" + x + "'";
+}
 
       // Soporte para importación de módulos en subcarpetas del VFS
       let rutaLimpia = x.replace(/\.py$/, "").replace(/\//g, ".");
